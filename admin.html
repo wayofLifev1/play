@@ -15,6 +15,7 @@
             --cyan: #00f2ea;
             --purple: #bf00ff;
             --green: #00e676;
+            --red: #ff4757;
             --card-bg: rgba(255,255,255,0.05);
         }
         body {
@@ -23,6 +24,36 @@
             background-image: radial-gradient(circle at 50% 0%, #1a0b2e, #05050a 60%);
             min-height: 100vh;
         }
+        
+        /* --- LOGIN SCREEN STYLES --- */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark); z-index: 999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .login-box {
+            background: var(--card-bg); padding: 40px; border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1); text-align: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+        }
+        .pass-input {
+            background: rgba(0,0,0,0.3); border: 1px solid var(--purple);
+            color: var(--cyan); padding: 10px 20px; font-size: 1.5rem;
+            border-radius: 10px; text-align: center; letter-spacing: 5px;
+            font-family: 'Orbitron'; width: 150px; outline: none;
+            margin-bottom: 20px;
+        }
+        .login-btn {
+            background: var(--purple); color: white; border: none;
+            padding: 10px 30px; border-radius: 30px; font-family: 'Orbitron';
+            cursor: pointer; font-size: 1rem; transition: 0.2s;
+        }
+        .login-btn:hover { background: var(--cyan); color: #000; box-shadow: 0 0 15px var(--cyan); }
+        .error-msg { color: var(--red); font-size: 0.8rem; margin-top: 15px; display: none; }
+
+        /* --- DASHBOARD STYLES --- */
+        #admin-app { display: none; } /* Hidden by default */
+        
         .container { max-width: 800px; margin: 0 auto; padding: 20px; }
         
         h1 { 
@@ -79,99 +110,147 @@
 </head>
 <body>
 
-<div class="container">
-    <h1>GALAXY ADMIN</h1>
-
-    <div class="stats-grid">
-        <div class="stat-card" style="border-top: 3px solid var(--green);">
-            <div class="stat-label">Currently Online</div>
-            <div id="val-online" class="stat-val pulse" style="color: var(--green)">0</div>
-        </div>
-        <div class="stat-card" style="border-top: 3px solid var(--cyan);">
-            <div class="stat-label">Total Launches</div>
-            <div id="val-visits" class="stat-val" style="color: var(--cyan)">0</div>
-        </div>
-        <div class="stat-card" style="border-top: 3px solid var(--purple);">
-            <div class="stat-label">Total Installs</div>
-            <div id="val-installs" class="stat-val" style="color: var(--purple)">0</div>
+    <div id="login-screen">
+        <div class="login-box">
+            <h2 style="margin-bottom: 20px; color: #fff;">SECURITY CHECK</h2>
+            <input type="password" id="passcode" class="pass-input" placeholder="CODE" maxlength="4">
+            <br>
+            <button class="login-btn" onclick="checkLogin()">ACCESS</button>
+            <div id="error-msg" class="error-msg">ACCESS DENIED</div>
         </div>
     </div>
 
-    <div class="panel">
-        <div class="panel-head">
-            <h2>LIVE FEED</h2>
-            <div style="font-size: 0.8rem; color: #666;">Realtime Database</div>
-        </div>
-        <div id="user-list">
-            <div style="text-align:center; color:#555; padding: 20px;">Waiting for signal...</div>
+    <div id="admin-app">
+        <div class="container">
+            <h1>GALAXY ADMIN</h1>
+
+            <div class="stats-grid">
+                <div class="stat-card" style="border-top: 3px solid var(--green);">
+                    <div class="stat-label">Currently Online</div>
+                    <div id="val-online" class="stat-val pulse" style="color: var(--green)">0</div>
+                </div>
+                <div class="stat-card" style="border-top: 3px solid var(--cyan);">
+                    <div class="stat-label">Total Launches</div>
+                    <div id="val-visits" class="stat-val" style="color: var(--cyan)">0</div>
+                </div>
+                <div class="stat-card" style="border-top: 3px solid var(--purple);">
+                    <div class="stat-label">Total Installs</div>
+                    <div id="val-installs" class="stat-val" style="color: var(--purple)">0</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-head">
+                    <h2>LIVE FEED</h2>
+                    <div style="font-size: 0.8rem; color: #666;">Realtime Database</div>
+                </div>
+                <div id="user-list">
+                    <div style="text-align:center; color:#555; padding: 20px;">Waiting for signal...</div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
 <script>
-    // --- ADMIN CONFIGURATION ---
-    // PASTE THE SAME FIREBASE CONFIG HERE AS YOU DID IN INFINITE.HTML
-    const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_PROJECT.firebaseapp.com",
-        databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_PROJECT.appspot.com",
-        messagingSenderId: "000000000",
-        appId: "1:00000000:web:00000000"
-    };
+    // --- LOGIN LOGIC ---
+    function checkLogin() {
+        const input = document.getElementById('passcode').value;
+        const screen = document.getElementById('login-screen');
+        const app = document.getElementById('admin-app');
+        const err = document.getElementById('error-msg');
 
-    if(firebaseConfig.apiKey === "YOUR_API_KEY") {
-        alert("SETUP REQUIRED: Open admin.html source code and paste your Firebase API Keys to see real data.");
-    } else {
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        if (input === '1234') {
+            screen.style.opacity = '0';
+            setTimeout(() => {
+                screen.style.display = 'none';
+                app.style.display = 'block';
+                initFirebase(); // Only start listening to data after login
+            }, 500);
+        } else {
+            err.style.display = 'block';
+            document.getElementById('passcode').value = '';
+            // Shake effect
+            screen.querySelector('.login-box').animate([
+                { transform: 'translateX(0)' },
+                { transform: 'translateX(-10px)' },
+                { transform: 'translateX(10px)' },
+                { transform: 'translateX(0)' }
+            ], { duration: 300 });
+        }
+    }
+    
+    // Allow "Enter" key to submit
+    document.getElementById('passcode').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') checkLogin();
+    });
 
-        // 1. Listen for Total Visits
-        db.ref('stats/visits').on('value', snap => {
-            document.getElementById('val-visits').innerText = snap.val() || 0;
-        });
+    // --- FIREBASE LOGIC (Wrapped in function) ---
+    function initFirebase() {
+        // PASTE YOUR FIREBASE CONFIG HERE
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "000000000",
+            appId: "1:00000000:web:00000000"
+        };
 
-        // 2. Listen for Installs
-        db.ref('stats/installs').on('value', snap => {
-            document.getElementById('val-installs').innerText = snap.val() || 0;
-        });
-
-        // 3. Listen for ONLINE USERS
-        db.ref('status').on('value', snap => {
-            const list = document.getElementById('user-list');
-            list.innerHTML = ''; // Clear list
-            
-            let onlineCount = 0;
-            const users = snap.val();
-
-            if(users) {
-                Object.keys(users).forEach(uid => {
-                    const u = users[uid];
-                    if (u.state === 'online') {
-                        onlineCount++;
-                        
-                        // Create Row
-                        const row = document.createElement('div');
-                        row.className = 'user-row';
-                        row.innerHTML = `
-                            <div>
-                                <span class="status-dot online"></span>
-                                <span style="font-family:monospace; font-size:0.9rem;">${uid}</span>
-                            </div>
-                            <span class="device-badge">${u.device || 'Unknown'}</span>
-                        `;
-                        list.appendChild(row);
-                    }
-                });
+        if(firebaseConfig.apiKey === "YOUR_API_KEY") {
+            alert("SETUP REQUIRED: Paste your Firebase API Keys in admin.html source code.");
+        } else {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
             }
-            
-            if(onlineCount === 0) list.innerHTML = '<div style="text-align:center; color:#555; padding:20px;">No users online</div>';
-            
-            // Animate count change
-            const countDisplay = document.getElementById('val-online');
-            countDisplay.innerText = onlineCount;
-        });
+            const db = firebase.database();
+
+            // 1. Listen for Total Visits
+            db.ref('stats/visits').on('value', snap => {
+                document.getElementById('val-visits').innerText = snap.val() || 0;
+            });
+
+            // 2. Listen for Installs
+            db.ref('stats/installs').on('value', snap => {
+                document.getElementById('val-installs').innerText = snap.val() || 0;
+            });
+
+            // 3. Listen for ONLINE USERS
+            db.ref('status').on('value', snap => {
+                const list = document.getElementById('user-list');
+                list.innerHTML = ''; // Clear list
+                
+                let onlineCount = 0;
+                const users = snap.val();
+
+                if(users) {
+                    Object.keys(users).forEach(uid => {
+                        const u = users[uid];
+                        if (u.state === 'online') {
+                            onlineCount++;
+                            
+                            // Create Row
+                            const row = document.createElement('div');
+                            row.className = 'user-row';
+                            row.innerHTML = `
+                                <div>
+                                    <span class="status-dot online"></span>
+                                    <span style="font-family:monospace; font-size:0.9rem;">${uid}</span>
+                                </div>
+                                <span class="device-badge">${u.device || 'Unknown'}</span>
+                            `;
+                            list.appendChild(row);
+                        }
+                    });
+                }
+                
+                if(onlineCount === 0) list.innerHTML = '<div style="text-align:center; color:#555; padding:20px;">No users online</div>';
+                
+                // Animate count change
+                const countDisplay = document.getElementById('val-online');
+                countDisplay.innerText = onlineCount;
+            });
+        }
     }
 </script>
 
