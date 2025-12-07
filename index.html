@@ -841,16 +841,14 @@ if ('serviceWorker' in navigator) {
 
 // 2. Tracking System (User Stats)
 const firebaseConfig = {
-    // PASTE YOUR FIREBASE CONFIG HERE TO MAKE ADMIN WORK
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "000000000",
-    appId: "1:00000000:web:00000000"
+  apiKey: "AIzaSyCYPD6eFQvtwi6CMBkAbQ1SmkWA2qtby9s",
+  authDomain: "wofplay-123.firebaseapp.com",
+  databaseURL: "https://wofplay-123-default-rtdb.firebaseio.com",
+  projectId: "wofplay-123",
+  storageBucket: "wofplay-123.firebasestorage.app",
+  messagingSenderId: "716443688368",
+  appId: "1:716443688368:web:6ebd08d8d3a49f1c494a75"
 };
-
 // Check if config is set before running
 if(firebaseConfig.apiKey !== "YOUR_API_KEY") {
     firebase.initializeApp(firebaseConfig);
