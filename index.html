@@ -11,12 +11,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="manifest" href="manifest.json">
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
 
-    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
+
     <style>
         /* --- CORE THEME --- */
         :root {
@@ -35,7 +36,13 @@
         body {
             margin: 0; font-family: var(--font-body);
             background-color: var(--bg-dark);
-            color: #fff; overflow: hidden; touch-action: none; user-select: none;
+            color: #fff; 
+            overflow: hidden; 
+            
+            /* CRITICAL: Prevents Pull-to-Refresh & Zoom */
+            overscroll-behavior-y: contain; 
+            touch-action: none; 
+            user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -178,10 +185,10 @@
         .reflex-tile::after { content:''; position: absolute; inset:0; border-radius:12px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
         .reflex-tile.active-target { background: var(--pink); box-shadow: 0 0 40px var(--pink), inset 0 0 10px white; transform: scale(1.05); border: 2px solid white; z-index: 10; }
 
-        /* --- UPDATED RUNNER STYLE (Dark Galaxy Theme) --- */
+        /* Runner */
         #runner-container { width: 95%; max-width: 700px; display: flex; flex-direction: column; align-items: center; }
         canvas#runner-canvas {
-            background: rgba(0, 0, 0, 0.3); /* Transparent for stars */
+            background: rgba(0, 0, 0, 0.3);
             border: 3px solid var(--purple); 
             border-radius: 16px;
             box-shadow: 0 0 25px rgba(191, 0, 255, 0.4);
@@ -212,6 +219,43 @@
         
         .particle { position: absolute; width: 8px; height: 8px; border-radius: 50%; pointer-events: none; }
 
+        /* --- INSTALL POPUP (Galaxy Theme) --- */
+        #install-popup {
+            position: fixed; bottom: -200px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px;
+            background: rgba(5, 5, 10, 0.95);
+            border: 1px solid var(--cyan);
+            border-radius: 20px 20px 0 0;
+            padding: 25px;
+            z-index: 1000;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 242, 234, 0.2);
+            backdrop-filter: blur(10px);
+            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: none;
+        }
+        #install-popup.show { bottom: 0; display: block; }
+        #install-popup h3 {
+            margin: 0 0 10px 0; color: var(--cyan); font-family: var(--font-head);
+            font-size: 1.2rem; letter-spacing: 1px;
+        }
+        #install-text {
+            color: #ddd; font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5;
+        }
+        #btn-install-action {
+            background: var(--green); color: #000; border: none;
+            padding: 12px 30px; border-radius: 25px;
+            font-weight: bold; font-family: var(--font-head);
+            box-shadow: 0 0 15px var(--green); cursor: pointer;
+            font-size: 1rem; width: 100%; margin-bottom: 10px;
+        }
+        .close-link {
+            color: #666; font-size: 0.8rem; text-decoration: underline; cursor: pointer; margin-top: 10px; display: block;
+        }
+        /* Icon colors for iOS instructions */
+        .fa-share-square { color: var(--blue); }
+        .fa-plus-square { color: #ccc; }
+
     </style>
 </head>
 <body>
@@ -227,13 +271,13 @@
     </div>
 
     <div id="menu" class="screen active">
+        <button onclick="showPopup(isIos)" class="btn-small" style="position: absolute; top: 20px; left: 20px; z-index: 20; border:none; background:transparent; opacity:0.6; font-size:1.2rem;">
+            <i class="fas fa-download"></i>
+        </button>
+
         <div style="padding: 30px 0;" class="float-anim">
             <h1>BRAIN<br>ARCADE</h1>
             <p style="text-align:center; opacity: 0.6; font-size: 0.9rem; margin: 0; letter-spacing: 3px; color:var(--cyan);">GALAXY EDITION</p>
-            
-            <button id="btn-install" class="btn-small" style="display:none; margin: 15px auto; background: var(--green); color: #000; box-shadow: 0 0 15px var(--green); border:none; font-size:1rem; padding: 10px 30px;">
-                ⬇ INSTALL APP
-            </button>
         </div>
         <div class="menu-scroll">
             <div class="menu-grid">
@@ -339,6 +383,14 @@
         <button class="btn-small" style="font-size:1.3rem; padding:18px 50px; background:var(--cyan); color:#000; border:none; box-shadow:0 0 25px var(--cyan);" onclick="restartGame()">RETRY</button>
         <button class="btn-small" onclick="showMenu()" style="margin-top:25px; border:none; background:transparent; font-size:1rem; opacity:0.7;">BACK TO MENU</button>
     </div>
+
+    <div id="install-popup">
+        <h3>INSTALL APP</h3>
+        <div id="install-text"></div>
+        <button id="btn-install-action" style="display:none;">INSTALL NOW</button>
+        <span class="close-link" onclick="closeInstallPopup()">Not now, maybe later</span>
+    </div>
+
 </div>
 
 <script>
@@ -382,7 +434,6 @@
     const scores = { memory:0, math:0, color:0, odd:0, order:0, dash:0, reflex:0, runner:0 };
 
     function loadScores() {
-        // [FIXED] Safety check for corrupted local storage
         try {
             let s = localStorage.getItem('brainArcadeV6');
             if(s) Object.assign(scores, JSON.parse(s));
@@ -593,7 +644,6 @@
             let maxTries=100, left, top, safe=false, cW = c.clientWidth, cH = c.clientHeight;
 
             while(maxTries>0 && !safe) {
-                // [FIXED] Changed 84 to 80 to keep bubbles fully on screen (mobile friendly)
                 left = Math.random() * 80 + 2; 
                 top = Math.random() * 80 + 2; 
                 safe=true;
@@ -681,20 +731,18 @@
     let rCtx = rCanvas.getContext("2d");
     
     let rObstacles = []; 
-    // Relaxed Physics: Lower Gravity (0.6), Softer Jump (-12)
     let rDino = { x: 50, y: 220, w: 50, h: 50, vy: 0, gravity: 0.6, jump: -12, grounded: false };
     let rCookie = { x: 900, y: 150, w: 30, h: 30 };
     let rClouds = [{x:100,y:40,s:40}, {x:400,y:120,s:50}, {x:600,y:30,s:35}, {x:800,y:200,s:60}];
-    let rSpeed = 5; // Start much slower
+    let rSpeed = 5; 
     let rFrameId;
     let nextSpawn = 0;
 
     function initRunner() {
-        // Reset to relaxed state
         rDino = { x: 50, y: 220, w: 50, h: 50, vy: 0, gravity: 0.6, jump: -12, grounded: false };
         rObstacles = []; 
         rCookie = { x: 900, y: 150, w: 30, h: 30 };
-        rSpeed = 5; // Start slow
+        rSpeed = 5; 
         score = 0;
         nextSpawn = 0;
         
@@ -710,7 +758,7 @@
         if (rDino.grounded) {
             rDino.vy = rDino.jump;
             rDino.grounded = false;
-            Audio.play(200, 'sawtooth', 0.1); // Boost sound
+            Audio.play(200, 'sawtooth', 0.1); 
         }
     }
 
@@ -723,60 +771,49 @@
     }
 
     function updateRunner() {
-        // Physics
         rDino.y += rDino.vy;
         rDino.vy += rDino.gravity;
         
-        // Floor (220 is stop point)
         if (rDino.y >= 220) { rDino.y = 220; rDino.vy = 0; rDino.grounded = true; } 
         else { rDino.grounded = false; }
 
-        // Spawning Logic
         nextSpawn -= rSpeed;
         if (nextSpawn <= 0) {
-            // Randomize obstacle type: 1 = Comet, 0 = Rock
             rObstacles.push({ x: 800, y: 235, w: 30, h: 50, type: Math.random() > 0.5 ? 1 : 0 });
-            // Wider gaps between obstacles (Relaxed pace)
             nextSpawn = 450 + Math.random() * 500; 
         }
 
-        // Move Obstacles & Collision
         for(let i = rObstacles.length - 1; i >= 0; i--) {
             let obs = rObstacles[i];
             obs.x -= rSpeed;
-
-            // Hitbox
-            let pad = 12; // slightly forgiving
+            let pad = 12; 
             if (rDino.x + pad < obs.x + obs.w - pad &&
                 rDino.x + rDino.w - pad > obs.x + pad &&
                 rDino.y + pad < obs.y + obs.h - pad &&
                 rDino.y + rDino.h - pad > obs.y + pad) {
+                
+                boom(rDino.x + 25, rDino.y + 25, '#ff4757');
                 gameOver("Ship Destroyed!");
                 return;
             }
             if (obs.x < -50) rObstacles.splice(i, 1);
         }
 
-        // Move Collectible (Energy Orb)
         rCookie.x -= rSpeed;
         if (rCookie.x < -50) { rCookie.x = 800 + Math.random() * 400; rCookie.y = 100 + Math.random() * 100; }
 
         if (rDino.x < rCookie.x + rCookie.w && rDino.x + rDino.w > rCookie.x &&
             rDino.y < rCookie.y + rCookie.h && rDino.y + rDino.h > rCookie.y) {
-            score += 50; Audio.play(1000, 'sine', 0.1); // High pitch pickup
+            score += 50; Audio.play(1000, 'sine', 0.1); 
             rCookie.x = 800 + Math.random() * 1000; rCookie.y = 100 + Math.random() * 100;
         }
 
-        // Env (Star streaks)
         rClouds.forEach(c => {
-            c.x -= rSpeed * 0.5; // Parallax
+            c.x -= rSpeed * 0.5; 
             if(c.x + c.s < 0) { c.x = rCanvas.width + Math.random()*100; c.y = Math.random()*200; }
         });
 
-        // Score & Accel
         score += 0.2;
-        // GRADUAL SPEED INCREASE:
-        // Starts at 5. Every 150 points, speed increases by 1. Caps at 18.
         rSpeed = Math.min(18, 5 + Math.floor(score / 150));
         updateScore(0);
     }
@@ -784,20 +821,17 @@
     function drawRunner() {
         rCtx.clearRect(0, 0, rCanvas.width, rCanvas.height);
         
-        // 1. Star Streaks (Background speed lines)
         rCtx.fillStyle = "rgba(255, 255, 255, 0.4)"; 
         rClouds.forEach(c => { 
             rCtx.fillRect(c.x, c.y, c.s, 2); 
         });
 
-        // 2. Ground (Neon Purple)
         rCtx.shadowBlur = 20;
         rCtx.shadowColor = "#bf00ff";
         rCtx.fillStyle = "#bf00ff"; 
-        rCtx.fillRect(0, 270, rCanvas.width, 5); // Match physics floor
+        rCtx.fillRect(0, 270, rCanvas.width, 5); 
         rCtx.shadowBlur = 0;
 
-        // 3. Player (Rocket) - Tilts when jumping
         rCtx.save();
         rCtx.translate(rDino.x + 25, rDino.y + 25);
         let angle = rDino.vy * 2; 
@@ -809,21 +843,18 @@
         rCtx.fillText("🚀", 0, 15);
         rCtx.restore();
 
-        // 4. Obstacles (Comets/Rocks)
         rCtx.font = "40px Arial";
         rCtx.shadowBlur = 10;
-        rCtx.shadowColor = "#ff4757"; // Red danger glow
+        rCtx.shadowColor = "#ff4757"; 
         rObstacles.forEach(obs => { 
             let icon = obs.type === 1 ? "☄️" : "🪨"; 
             rCtx.fillText(icon, obs.x - 5, obs.y + 40); 
         });
 
-        // 5. Collectible (Energy)
         rCtx.font = "30px Arial";
         rCtx.shadowBlur = 15;
-        rCtx.shadowColor = "#f1c40f"; // Gold glow
+        rCtx.shadowColor = "#f1c40f"; 
         rCtx.fillText("⚡", rCookie.x, rCookie.y + 30);
-        
         rCtx.shadowBlur = 0;
     }
 
@@ -834,97 +865,134 @@
         rFrameId = requestAnimationFrame(runnerLoop);
     }
     
-    // Canvas Touch
     rCanvas.addEventListener("touchstart", function(e) { e.preventDefault(); runnerJump(e); }, {passive: false});
     rCanvas.addEventListener("mousedown", function(e) { runnerJump(e); });
 
     loadScores();
-    // --- PWA INSTALLATION & TRACKING ---
 
-// 1. Register PWA Service Worker
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js')
-    .then(() => console.log('Game Ready Offline'));
-}
+    // --- SMART INSTALL LOGIC (UPDATED) ---
 
-// 2. Tracking System (User Stats)
-const firebaseConfig = {
-  apiKey: "AIzaSyCYPD6eFQvtwi6CMBkAbQ1SmkWA2qtby9s",
-  authDomain: "wofplay-123.firebaseapp.com",
-  databaseURL: "https://wofplay-123-default-rtdb.firebaseio.com",
-  projectId: "wofplay-123",
-  storageBucket: "wofplay-123.firebasestorage.app",
-  messagingSenderId: "716443688368",
-  appId: "1:716443688368:web:6ebd08d8d3a49f1c494a75"
-};
-// Check if config is set before running
-if(firebaseConfig.apiKey !== "YOUR_API_KEY") {
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    
-    // Identify User
-    let uid = localStorage.getItem('ba_uid');
-    if(!uid) { uid = 'user_' + Math.random().toString(36).substr(2, 9); localStorage.setItem('ba_uid', uid); }
+    // 1. Detect Device & Mode
+    const isIos = (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && !window.MSStream;
+    const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator.standalone);
+    let deferredPrompt;
 
-    // Track Visits (Counter)
-    const visitsRef = db.ref('stats/visits');
-    visitsRef.transaction(current_value => (current_value || 0) + 1);
-
-    // Track Online Presence
-    const userStatusRef = db.ref('/status/' + uid);
-    const connectedRef = db.ref('.info/connected');
-
-    connectedRef.on('value', (snap) => {
-        if (snap.val() === true) {
-            // We're connected!
-            userStatusRef.onDisconnect().remove(); // Remove me if I close tab
-            userStatusRef.set({
-                state: 'online',
-                last_seen: Date.now(),
-                device: /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop'
-            });
+    // 2. Initialize Logic on Load
+    window.addEventListener('load', () => {
+        // If already installed or explicitly dismissed recently (optional), don't show
+        if(localStorage.getItem('brainArcadeInstalled') === 'true') return;
+        
+        // iOS Check: No event fires, so we check manually
+        if(isIos && !isInStandaloneMode) {
+            setTimeout(() => showPopup(true), 3000); // Wait 3s before asking
         }
     });
 
-    // Track Installs
-    window.addEventListener('appinstalled', () => {
-        db.ref('stats/installs').transaction(val => (val || 0) + 1);
+    // 3. Android/Chrome Event Listener
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        // Only show if not marked as installed
+        if(!localStorage.getItem('brainArcadeInstalled')) {
+            setTimeout(() => showPopup(false), 2000);
+        }
     });
-}
 
-// --- PWA INSTALL LOGIC ---
-let deferredPrompt;
-const installBtn = document.getElementById('btn-install');
+    function showPopup(isIOSMode) {
+        const popup = document.getElementById('install-popup');
+        const btn = document.getElementById('btn-install-action');
+        const txt = document.getElementById('install-text');
 
-window.addEventListener('beforeinstallprompt', (e) => {
-    // 1. Prevent Chrome 67+ from automatically showing the prompt
-    e.preventDefault();
-    // 2. Stash the event so it can be triggered later
-    deferredPrompt = e;
-    // 3. Show our custom "INSTALL APP" button
-    installBtn.style.display = 'block';
-});
+        popup.style.display = 'block';
+        setTimeout(() => popup.classList.add('show'), 100);
 
-installBtn.addEventListener('click', async () => {
-    if (deferredPrompt) {
-        // 4. Show the install prompt
-        deferredPrompt.prompt();
-        // 5. Wait for the user to respond to the prompt
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log(`User response to install prompt: ${outcome}`);
-        // 6. We've used the prompt, so clear it
-        deferredPrompt = null;
-        installBtn.style.display = 'none';
+        if(isIOSMode) {
+            // iOS Instructions
+            btn.style.display = 'none';
+            txt.innerHTML = `
+                Play fullscreen & offline!<br><br>
+                1. Tap Share <i class="fas fa-share-square"></i><br>
+                2. Scroll & select 'Add to Home Screen' <i class="far fa-plus-square"></i>
+            `;
+            // Mark as "seen" when closed
+            localStorage.setItem('brainArcadeInstalled', 'true'); 
+        } else {
+            // Android Button
+            btn.style.display = 'block';
+            txt.innerText = "Install Brain Arcade for the best experience. Fullscreen & Offline!";
+        }
     }
-});
 
-// Optional: Hide button if app is already installed
-window.addEventListener('appinstalled', () => {
-    installBtn.style.display = 'none';
-    console.log('PWA was installed');
-});
+    function closeInstallPopup() {
+        const popup = document.getElementById('install-popup');
+        popup.classList.remove('show');
+        setTimeout(() => popup.style.display='none', 400);
+    }
+
+    // 4. Handle Button Click (Android)
+    document.getElementById('btn-install-action').addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                localStorage.setItem('brainArcadeInstalled', 'true');
+            }
+            deferredPrompt = null;
+            closeInstallPopup();
+        }
+    });
+
+    // 5. Track successful install event (Chrome)
+    window.addEventListener('appinstalled', () => {
+        localStorage.setItem('brainArcadeInstalled', 'true');
+        closeInstallPopup();
+        console.log('App Installed Successfully');
+    });
+
+    // --- TRACKING ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyCYPD6eFQvtwi6CMBkAbQ1SmkWA2qtby9s",
+      authDomain: "wofplay-123.firebaseapp.com",
+      databaseURL: "https://wofplay-123-default-rtdb.firebaseio.com",
+      projectId: "wofplay-123",
+      storageBucket: "wofplay-123.firebasestorage.app",
+      messagingSenderId: "716443688368",
+      appId: "1:716443688368:web:6ebd08d8d3a49f1c494a75"
+    };
+
+    if(firebaseConfig.apiKey !== "YOUR_API_KEY") {
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        let uid = localStorage.getItem('ba_uid');
+        if(!uid) { uid = 'user_' + Math.random().toString(36).substr(2, 9); localStorage.setItem('ba_uid', uid); }
+
+        const visitsRef = db.ref('stats/visits');
+        visitsRef.transaction(current_value => (current_value || 0) + 1);
+
+        const userStatusRef = db.ref('/status/' + uid);
+        const connectedRef = db.ref('.info/connected');
+
+        connectedRef.on('value', (snap) => {
+            if (snap.val() === true) {
+                userStatusRef.onDisconnect().remove();
+                userStatusRef.set({
+                    state: 'online',
+                    last_seen: Date.now(),
+                    device: /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop'
+                });
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            db.ref('stats/installs').transaction(val => (val || 0) + 1);
+        });
+    }
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+        .then(() => console.log('Game Ready Offline'));
+    }
 
 </script>
 </body>
 </html>
-
