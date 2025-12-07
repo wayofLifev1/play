@@ -1,6 +1,8 @@
 const CACHE_NAME = 'brain-arcade-v6-offline';
 const ASSETS = [
   './index.html',
+  './icon194.png',
+  './icon512.png',
   './manifest.json',
   'https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@400;600&display=swap'
 ];
