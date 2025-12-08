@@ -370,7 +370,8 @@
                 <div style="text-align:center;"><div style="font-size:0.8rem; color:#bbb; margin-bottom:5px;">MOBILE</div><span class="key-badge">TAP SCREEN</span></div>
             </div>
         </div>
-        <button class="btn-small" style="background:var(--purple); color:white; font-size:1.1rem; padding:15px 40px; border:none; margin-top:20px;" onclick="runnerJump(event)">BOOST!</button>
+    <button class="btn-small" style="background:var(--purple); color:white; font-size:1.1rem; padding:15px 40px; border:none; margin-top:20px;" onclick="runnerJump(event); this.blur();">BOOST!</button>
+
     </div>
 
     <div id="msg-overlay">
@@ -392,7 +393,6 @@
     </div>
 
 </div>
-
 <script>
     // --- AUDIO SYSTEM ---
     const Audio = {
@@ -431,6 +431,7 @@
     // --- LOGIC ---
     let game = null, score = 0, diff = 1, timer = null, isPlay = false;
     let countdownTimer = null; 
+    let rFrameId = null; // Ensure this is initialized for global clearing
     const scores = { memory:0, math:0, color:0, odd:0, order:0, dash:0, reflex:0, runner:0 };
 
     function loadScores() {
@@ -500,11 +501,19 @@
     function restartGame() { startSequence(game); }
     function updateScore(n) { score+=n; document.getElementById('score-display').innerText="SCORE: "+Math.floor(score); }
     
+    // FIX: Ensure all timers/animation frames are cleared and listeners removed.
     function stop() { 
         isPlay=false; 
         clearInterval(timer);
+        clearInterval(countdownTimer); // Added clear for countdown
         if(rFrameId) cancelAnimationFrame(rFrameId);
-        document.removeEventListener('keydown', handleRunnerKey);
+        rFrameId = null; // Reset frame ID
+        document.removeEventListener('keydown', handleRunnerKey); // Critical fix for Runner game state
+        
+        // Minor Fix: Clear canvas if Runner was active
+        if (rCtx) {
+            rCtx.clearRect(0, 0, rCanvas.width, rCanvas.height);
+        }
     }
     
     function gameOver(reason) {
@@ -514,6 +523,11 @@
         document.getElementById('msg-reason').innerText = reason;
         document.getElementById('final-score').innerText = Math.floor(score);
         document.getElementById('msg-overlay').style.display='flex';
+
+        // FIX: Clear Memory Matrix level display on game over
+        if(game === 'memory') {
+            document.getElementById('level-display').innerText = "LEVEL 1";
+        }
     }
 
     function setTimer(id, sec, cb) {
@@ -584,7 +598,11 @@
 
         let q=`${n1} ${op} ${n2}`;
         let fake=ans+(Math.random()<.5?1:-1)*Math.floor(Math.random()*5+1);
-        if(fake===ans) fake++;
+        
+        // FIX: Ensure fake answer is never the correct answer
+        while(fake === ans) { 
+            fake=ans+(Math.random()<.5?1:-1)*Math.floor(Math.random()*5+1);
+        }
         
         document.getElementById('math-problem').innerText=q;
         let corr=Math.random()<.5, b1=document.getElementById('btn-opt1'), b2=document.getElementById('btn-opt2');
@@ -631,24 +649,34 @@
 
     // 5. ORDER
     let nN=1, mN=5;
-    function initOrder() { nextOrd(); }
+    function initOrder() { 
+        // FIX: Introduce a slight delay to allow the container to be rendered and its dimensions calculated correctly.
+        setTimeout(nextOrd, 50); 
+    }
     function nextOrd() {
+        if(!isPlay) return;
         nN=1; mN=4+Math.floor(diff/2); document.getElementById('next-num').innerText=1;
         let c=document.getElementById('order-container'); c.innerHTML='';
         let positions = [];
         const safeDistPx = 60; 
 
+        // FIX: Capture client dimensions after a short delay/render to ensure they are correct.
+        let cW = c.clientWidth;
+        let cH = c.clientHeight;
+
         for(let i=1; i<=mN; i++) {
             let b=document.createElement('div'); b.className='order-bubble'; b.innerText=i;
             b.style.zIndex = (100 - i); 
-            let maxTries=100, left, top, safe=false, cW = c.clientWidth, cH = c.clientHeight;
+            let maxTries=100, left, top, safe=false;
 
             while(maxTries>0 && !safe) {
-                left = Math.random() * 80 + 2; 
-                top = Math.random() * 80 + 2; 
+                // Use a smaller range (70% instead of 80%) to account for bubble size (55px)
+                left = Math.random() * 70 + 5; 
+                top = Math.random() * 70 + 5; 
                 safe=true;
                 let px = (left/100) * cW;
                 let py = (top/100) * cH;
+
                 for(let pos of positions) {
                     let exPx = (pos.x/100) * cW;
                     let exPy = (pos.y/100) * cH;
@@ -693,6 +721,7 @@
             if(curDir==='L') correctDir='R'; if(curDir==='R') correctDir='L';
         }
         if(inputDir === correctDir) {
+            // FIX: Use curCol variable for particle boom color consistency
             Audio.win(); boom(e.clientX, e.clientY, curCol==='GREEN'?'#00e676':'#ff4757');
             updateScore(20); diff++; nextDash();
         } else gameOver("Wrong Direction");
@@ -735,9 +764,7 @@
     let rCookie = { x: 900, y: 150, w: 30, h: 30 };
     let rClouds = [{x:100,y:40,s:40}, {x:400,y:120,s:50}, {x:600,y:30,s:35}, {x:800,y:200,s:60}];
     let rSpeed = 5; 
-    let rFrameId;
-    let nextSpawn = 0;
-
+    
     function initRunner() {
         rDino = { x: 50, y: 220, w: 50, h: 50, vy: 0, gravity: 0.6, jump: -12, grounded: false };
         rObstacles = []; 
@@ -994,5 +1021,6 @@
     }
 
 </script>
+
 </body>
 </html>
