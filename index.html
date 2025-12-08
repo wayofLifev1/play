@@ -370,7 +370,7 @@
                 <div style="text-align:center;"><div style="font-size:0.8rem; color:#bbb; margin-bottom:5px;">MOBILE</div><span class="key-badge">TAP SCREEN</span></div>
             </div>
         </div>
-    <button class="btn-small" style="background:var(--purple); color:white; font-size:1.1rem; padding:15px 40px; border:none; margin-top:20px;" onclick="runnerJump(event); this.blur();">BOOST!</button>
+<button class="btn-small" style="background:var(--purple); color:white; font-size:1.1rem; padding:15px 40px; border:none; margin-top:20px;" onclick="runnerJump(event); this.blur();">BOOST!</button>
 
     </div>
 
@@ -431,7 +431,7 @@
     // --- LOGIC ---
     let game = null, score = 0, diff = 1, timer = null, isPlay = false;
     let countdownTimer = null; 
-    let rFrameId = null; // Ensure this is initialized for global clearing
+    let rFrameId = null; 
     const scores = { memory:0, math:0, color:0, odd:0, order:0, dash:0, reflex:0, runner:0 };
 
     function loadScores() {
@@ -450,8 +450,6 @@
 
     function showMenu() {
         stop(); 
-        clearInterval(countdownTimer); 
-        document.getElementById('countdown-overlay').style.display='none'; 
         
         document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
         document.getElementById('msg-overlay').style.display='none';
@@ -469,7 +467,9 @@
         cd.style.display='flex';
         let n = 3; txt.innerText=n;
         
+        // Ensure old timers are dead
         clearInterval(countdownTimer); 
+        
         countdownTimer = setInterval(()=>{
             n--;
             if(n>0) { txt.innerText=n; Audio.play(400,'square',0.1); }
@@ -501,17 +501,23 @@
     function restartGame() { startSequence(game); }
     function updateScore(n) { score+=n; document.getElementById('score-display').innerText="SCORE: "+Math.floor(score); }
     
-    // FIX: Ensure all timers/animation frames are cleared and listeners removed.
+    // [FIX 3] Fully cleaned up stop function to prevent ghost inputs
     function stop() { 
         isPlay=false; 
         clearInterval(timer);
-        clearInterval(countdownTimer); // Added clear for countdown
-        if(rFrameId) cancelAnimationFrame(rFrameId);
-        rFrameId = null; // Reset frame ID
-        document.removeEventListener('keydown', handleRunnerKey); // Critical fix for Runner game state
+        clearInterval(countdownTimer);
+        document.getElementById('countdown-overlay').style.display='none'; 
         
-        // Minor Fix: Clear canvas if Runner was active
-        if (rCtx) {
+        if(rFrameId) {
+            cancelAnimationFrame(rFrameId);
+            rFrameId = null;
+        }
+        
+        // Remove runner listener explicitly
+        document.removeEventListener('keydown', handleRunnerKey);
+        
+        // Clear canvas to prevent visual glitches
+        if (typeof rCtx !== 'undefined' && rCtx) {
             rCtx.clearRect(0, 0, rCanvas.width, rCanvas.height);
         }
     }
@@ -524,7 +530,6 @@
         document.getElementById('final-score').innerText = Math.floor(score);
         document.getElementById('msg-overlay').style.display='flex';
 
-        // FIX: Clear Memory Matrix level display on game over
         if(game === 'memory') {
             document.getElementById('level-display').innerText = "LEVEL 1";
         }
@@ -599,7 +604,6 @@
         let q=`${n1} ${op} ${n2}`;
         let fake=ans+(Math.random()<.5?1:-1)*Math.floor(Math.random()*5+1);
         
-        // FIX: Ensure fake answer is never the correct answer
         while(fake === ans) { 
             fake=ans+(Math.random()<.5?1:-1)*Math.floor(Math.random()*5+1);
         }
@@ -647,33 +651,32 @@
         setTimer('odd-timer', Math.max(2, 6-diff*0.3), ()=>gameOver("Time Up"));
     }
 
-    // 5. ORDER
+    // 5. ORDER CHAOS
+    // [FIX 1] Improved logic to prevent overlap and crash
     let nN=1, mN=5;
-    function initOrder() { 
-        // FIX: Introduce a slight delay to allow the container to be rendered and its dimensions calculated correctly.
-        setTimeout(nextOrd, 50); 
-    }
+    function initOrder() { setTimeout(nextOrd, 50); }
     function nextOrd() {
         if(!isPlay) return;
         nN=1; mN=4+Math.floor(diff/2); document.getElementById('next-num').innerText=1;
         let c=document.getElementById('order-container'); c.innerHTML='';
         let positions = [];
         const safeDistPx = 60; 
-
-        // FIX: Capture client dimensions after a short delay/render to ensure they are correct.
-        let cW = c.clientWidth;
-        let cH = c.clientHeight;
+        
+        let cW = c.clientWidth || 300; 
+        let cH = c.clientHeight || 300;
 
         for(let i=1; i<=mN; i++) {
             let b=document.createElement('div'); b.className='order-bubble'; b.innerText=i;
             b.style.zIndex = (100 - i); 
             let maxTries=100, left, top, safe=false;
 
+            // Try to find a safe spot
             while(maxTries>0 && !safe) {
-                // Use a smaller range (70% instead of 80%) to account for bubble size (55px)
-                left = Math.random() * 70 + 5; 
-                top = Math.random() * 70 + 5; 
+                left = Math.random() * 75 + 5; 
+                top = Math.random() * 75 + 5; 
                 safe=true;
+                
+                // Calculate pixel positions
                 let px = (left/100) * cW;
                 let py = (top/100) * cH;
 
@@ -685,6 +688,8 @@
                 }
                 maxTries--;
             }
+
+            // If not safe, we just place it anyway to avoid game crash, but logic continues
             positions.push({x:left, y:top});
             b.style.left=left+'%'; b.style.top=top+'%';
             b.onclick=(e)=>{
@@ -721,7 +726,6 @@
             if(curDir==='L') correctDir='R'; if(curDir==='R') correctDir='L';
         }
         if(inputDir === correctDir) {
-            // FIX: Use curCol variable for particle boom color consistency
             Audio.win(); boom(e.clientX, e.clientY, curCol==='GREEN'?'#00e676':'#ff4757');
             updateScore(20); diff++; nextDash();
         } else gameOver("Wrong Direction");
@@ -755,7 +759,7 @@
         } else gameOver("Missed!");
     }
 
-    // 8. ROCKET RUN (RELAXED MODE)
+    // 8. ROCKET RUN
     let rCanvas = document.getElementById("runner-canvas");
     let rCtx = rCanvas.getContext("2d");
     
@@ -764,6 +768,7 @@
     let rCookie = { x: 900, y: 150, w: 30, h: 30 };
     let rClouds = [{x:100,y:40,s:40}, {x:400,y:120,s:50}, {x:600,y:30,s:35}, {x:800,y:200,s:60}];
     let rSpeed = 5; 
+    let nextSpawn = 0; 
     
     function initRunner() {
         rDino = { x: 50, y: 220, w: 50, h: 50, vy: 0, gravity: 0.6, jump: -12, grounded: false };
@@ -897,29 +902,21 @@
 
     loadScores();
 
-    // --- SMART INSTALL LOGIC (UPDATED) ---
-
-    // 1. Detect Device & Mode
+    // --- SMART INSTALL LOGIC ---
     const isIos = (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && !window.MSStream;
     const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator.standalone);
     let deferredPrompt;
 
-    // 2. Initialize Logic on Load
     window.addEventListener('load', () => {
-        // If already installed or explicitly dismissed recently (optional), don't show
         if(localStorage.getItem('brainArcadeInstalled') === 'true') return;
-        
-        // iOS Check: No event fires, so we check manually
         if(isIos && !isInStandaloneMode) {
-            setTimeout(() => showPopup(true), 3000); // Wait 3s before asking
+            setTimeout(() => showPopup(true), 3000); 
         }
     });
 
-    // 3. Android/Chrome Event Listener
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        // Only show if not marked as installed
         if(!localStorage.getItem('brainArcadeInstalled')) {
             setTimeout(() => showPopup(false), 2000);
         }
@@ -934,17 +931,10 @@
         setTimeout(() => popup.classList.add('show'), 100);
 
         if(isIOSMode) {
-            // iOS Instructions
             btn.style.display = 'none';
-            txt.innerHTML = `
-                Play fullscreen & offline!<br><br>
-                1. Tap Share <i class="fas fa-share-square"></i><br>
-                2. Scroll & select 'Add to Home Screen' <i class="far fa-plus-square"></i>
-            `;
-            // Mark as "seen" when closed
+            txt.innerHTML = `Play fullscreen & offline!<br><br>1. Tap Share <i class="fas fa-share-square"></i><br>2. Scroll & select 'Add to Home Screen' <i class="far fa-plus-square"></i>`;
             localStorage.setItem('brainArcadeInstalled', 'true'); 
         } else {
-            // Android Button
             btn.style.display = 'block';
             txt.innerText = "Install Brain Arcade for the best experience. Fullscreen & Offline!";
         }
@@ -956,7 +946,6 @@
         setTimeout(() => popup.style.display='none', 400);
     }
 
-    // 4. Handle Button Click (Android)
     document.getElementById('btn-install-action').addEventListener('click', async () => {
         if (deferredPrompt) {
             deferredPrompt.prompt();
@@ -969,14 +958,14 @@
         }
     });
 
-    // 5. Track successful install event (Chrome)
     window.addEventListener('appinstalled', () => {
         localStorage.setItem('brainArcadeInstalled', 'true');
         closeInstallPopup();
         console.log('App Installed Successfully');
     });
 
-    // --- TRACKING ---
+    // --- TRACKING (FIREBASE) ---
+    // [FIX 2] Added Try/Catch and type check so game works offline
     const firebaseConfig = {
       apiKey: "AIzaSyCYPD6eFQvtwi6CMBkAbQ1SmkWA2qtby9s",
       authDomain: "wofplay-123.firebaseapp.com",
@@ -987,39 +976,42 @@
       appId: "1:716443688368:web:6ebd08d8d3a49f1c494a75"
     };
 
-    if(firebaseConfig.apiKey !== "YOUR_API_KEY") {
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        let uid = localStorage.getItem('ba_uid');
-        if(!uid) { uid = 'user_' + Math.random().toString(36).substr(2, 9); localStorage.setItem('ba_uid', uid); }
+    if(typeof firebase !== 'undefined' && firebaseConfig.apiKey !== "YOUR_API_KEY") {
+        try {
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.database();
+            let uid = localStorage.getItem('ba_uid');
+            if(!uid) { uid = 'user_' + Math.random().toString(36).substr(2, 9); localStorage.setItem('ba_uid', uid); }
 
-        const visitsRef = db.ref('stats/visits');
-        visitsRef.transaction(current_value => (current_value || 0) + 1);
+            const visitsRef = db.ref('stats/visits');
+            visitsRef.transaction(current_value => (current_value || 0) + 1);
 
-        const userStatusRef = db.ref('/status/' + uid);
-        const connectedRef = db.ref('.info/connected');
+            const userStatusRef = db.ref('/status/' + uid);
+            const connectedRef = db.ref('.info/connected');
 
-        connectedRef.on('value', (snap) => {
-            if (snap.val() === true) {
-                userStatusRef.onDisconnect().remove();
-                userStatusRef.set({
-                    state: 'online',
-                    last_seen: Date.now(),
-                    device: /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop'
-                });
-            }
-        });
+            connectedRef.on('value', (snap) => {
+                if (snap.val() === true) {
+                    userStatusRef.onDisconnect().remove();
+                    userStatusRef.set({
+                        state: 'online',
+                        last_seen: Date.now(),
+                        device: /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop'
+                    });
+                }
+            });
 
-        window.addEventListener('appinstalled', () => {
-            db.ref('stats/installs').transaction(val => (val || 0) + 1);
-        });
+            window.addEventListener('appinstalled', () => {
+                db.ref('stats/installs').transaction(val => (val || 0) + 1);
+            });
+        } catch(err) {
+            console.log("Firebase tracking offline or failed to load:", err);
+        }
     }
 
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js')
         .then(() => console.log('Game Ready Offline'));
     }
-
 </script>
 
 </body>
