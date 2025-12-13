@@ -383,37 +383,62 @@
     }
     function tapRx(i) { if(i===rxTgt){ Audio.play(700); updateScore(15); diff++; nextRx(); } else gameOver("Missed"); }
 
-    // 8. RUNNER
+    // 8. RUNNER (FIXED FOR MEMORY LEAK)
     let rCanvas, rCtx, rDino, rObstacles, rFrame, rSpeed;
+
+    // GLOBAL LISTENERS FOR RUNNER (Only add once)
+    document.addEventListener('keydown', (e) => {
+        if(currentGame === 'runner' && isPlay && e.code === 'Space') runnerJump();
+    });
+    
+    // Touch listener for canvas
+    document.addEventListener('touchstart', (e) => {
+        if(currentGame === 'runner' && isPlay) {
+            // Check if user touched the canvas or jump button
+            if(e.target.id === 'runner-canvas' || e.target.innerText === 'JUMP!') {
+                e.preventDefault(); 
+                runnerJump();
+            }
+        }
+    }, {passive:false});
+
     function initRunner() {
         rCanvas=document.getElementById('runner-canvas'); rCtx=rCanvas.getContext('2d');
         rCtx.font = "30px Arial"; 
-        rDino={x:50,y:200,vy:0,w:30,h:30,g:true}; rObstacles=[]; rSpeed=4;
-        document.addEventListener('keydown', (e)=>{if(e.code==='Space')runnerJump()});
-        rCanvas.addEventListener('touchstart', (e)=>{e.preventDefault();runnerJump()}, {passive:false});
+        rDino={x:50,y:200,vy:0,w:30,h:30,g:true}; 
+        rObstacles=[]; 
+        rSpeed=4;
         runLoop();
     }
     function runnerJump(){ if(rDino.g && isPlay){ rDino.vy=-10; rDino.g=false; Audio.play(300); } }
+    
     function runLoop(){
         if(!isPlay) return;
         rCtx.clearRect(0,0,600,250);
-        rDino.vy+=0.6; rDino.y+=rDino.vy; if(rDino.y>200){rDino.y=200;rDino.vy=0;rDino.g=true;}
+        
+        // Dino Physics
+        rDino.vy+=0.6; rDino.y+=rDino.vy; 
+        if(rDino.y>200){rDino.y=200;rDino.vy=0;rDino.g=true;}
+        
+        // Spawn Obstacles
         if(Math.random()<0.02) rObstacles.push({x:600,y:210});
+        
+        // Draw Dino
         rCtx.fillStyle='#bf00ff'; rCtx.fillRect(rDino.x,rDino.y,rDino.w,rDino.h);
         
-// WITH THIS:
-for (let i = rObstacles.length - 1; i >= 0; i--) {
-    let o = rObstacles[i];
-    o.x -= rSpeed;
-    rCtx.fillText('🌵', o.x, o.y + 20);
-    // Check collision first
-    if (rDino.x < o.x + 20 && rDino.x + 30 > o.x && rDino.y < o.y + 20) {
-        gameOver("Crashed");
-        return; // Stop the loop immediately on death
-    }
-    // Remove if off screen
-    if (o.x < -20) rObstacles.splice(i, 1);
-}
+        // Draw Obstacles & Check Collision
+        for(let i=rObstacles.length-1; i>=0; i--) {
+            let o = rObstacles[i];
+            o.x -= rSpeed;
+            rCtx.fillText('🌵', o.x, o.y+20);
+            
+            // Collision Logic
+            if(rDino.x < o.x + 20 && rDino.x + 30 > o.x && rDino.y < o.y + 20) {
+                gameOver("Crashed");
+                return;
+            }
+            if(o.x < -20) rObstacles.splice(i,1);
+        }
 
         updateScore(0.1); rSpeed=4+score/100;
         rFrame=requestAnimationFrame(runLoop);
