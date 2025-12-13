@@ -1,22 +1,12 @@
-const CACHE_NAME = 'brain-arcade-v6-offline';
 const ASSETS = [
-  './index.html',
+  './',                // Caches the root
+  './index.html',        // OR index.html if you renamed it
+  './arcade.html',
+  './cosmic.html',
+  './manifest.json',
   './icon194.png',
   './icon512.png',
-  './manifest.json',
+  // You must cache the external 3D library for offline 3D to work
+  'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
   'https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@400;600&display=swap'
 ];
-
-// 1. Install Service Worker & Cache Files
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
-});
-
-// 2. Serve Files from Cache (Offline Support)
-self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then((response) => response || fetch(e.request))
-  );
-});
