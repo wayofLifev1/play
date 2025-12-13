@@ -1,0 +1,168 @@
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">  
+    <title>Cosmic Glide 3D</title>  
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@400;600&display=swap" rel="stylesheet">  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>  
+    <style>  
+        body { margin: 0; overflow: hidden; background: #05050a; font-family: 'Orbitron', sans-serif; color: white; touch-action: none; user-select: none; }
+        #game-glider { width: 100vw; height: 100vh; position: relative; }
+        #glider-hud-layer { position: absolute; top: 0; left: 0; width: 100%; padding: 20px; box-sizing: border-box; pointer-events: none; z-index: 10; display:flex; justify-content:space-between; }
+        .dust-counter { color: #ffd700; text-shadow: 0 0 10px #ffaa00; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; border: 1px solid #ffd700; font-size: 1.2rem; }
+        
+        /* Overlays */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,5,10,0.9); z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 15px 40px; border-radius: 30px; font-family: 'Orbitron'; font-size: 1.2rem; margin-top: 20px; cursor: pointer; }
+        .btn:active { background: rgba(255,255,255,0.3); }
+        #score-final { font-size: 4rem; color: #00f2ea; text-shadow: 0 0 20px #00f2ea; margin: 10px 0; }
+        
+        .exit-btn { pointer-events: auto; background: rgba(255,0,0,0.3); border: 1px solid red; padding: 5px 15px; border-radius: 10px; color: white; cursor: pointer; font-size: 0.8rem; }
+    </style>
+</head>  
+<body>  
+
+<div id="game-glider">  
+    <div id="glider-hud-layer">  
+        <div class="dust-counter">⭐ <span id="glider-dust-val">0</span></div> 
+        <button class="exit-btn" onclick="exitGame()">EXIT</button> 
+    </div>  
+    <div style="position: absolute; bottom: 30px; width: 100%; text-align: center; color: rgba(255,255,255,0.5); pointer-events: none; z-index:5;">DRAG TO FLY</div>
+</div>  
+
+<div id="start-overlay" class="overlay">
+    <h1 style="color:#ff00ff; text-shadow:0 0 20px #ff00ff; font-size:2.5rem;">COSMIC GLIDE</h1>
+    <button class="btn" onclick="initGlider()">START FLIGHT</button>
+    <button class="btn" style="margin-top:10px; font-size:0.9rem; background:transparent; border:none;" onclick="exitGame()">Back to Menu</button>
+</div>
+
+<div id="game-over" class="overlay" style="display:none;">
+    <h2 style="color:#ff4757; font-size:3rem;">CRASHED</h2>
+    <div id="score-final">0</div>
+    <div style="color:#aaa;">SCORE</div>
+    <button class="btn" onclick="location.reload()">RETRY</button>
+    <button class="btn" style="background:transparent; border:none;" onclick="exitGame()">EXIT</button>
+</div>
+
+<script>
+    let gScene, gCam, gRen, gPlayer, gObstacles=[], gStars=[], gFrameId, isPlay=false;
+    let gSpeed=0.5, score=0;
+    let inventory = { dust: 0, skin: 0, eggStart: 0 };
+
+    // Load Data
+    try {
+        let inv = localStorage.getItem('ba_inventory');
+        if(inv) Object.assign(inventory, JSON.parse(inv));
+        document.getElementById('glider-dust-val').innerText = inventory.dust;
+    } catch(e){}
+
+    function exitGame() {
+        window.parent.postMessage('close_game', '*');
+    }
+
+    function initGlider() {
+        document.getElementById('start-overlay').style.display = 'none';
+        isPlay = true;
+        
+        gScene = new THREE.Scene();
+        gScene.fog = new THREE.FogExp2(0x05050a, 0.04);
+        gCam = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 100);
+        gRen = new THREE.WebGLRenderer({alpha:true, antialias:true});
+        gRen.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('game-glider').appendChild(gRen.domElement);
+        
+        // Lights
+        gScene.add(new THREE.AmbientLight(0x404040, 2));
+        const dl = new THREE.DirectionalLight(0xffffff, 1); dl.position.set(0,10,5); gScene.add(dl);
+        gScene.add(new THREE.GridHelper(200, 40, 0x00f2ea, 0x111122));
+
+        // Player Skin Logic
+        const skins = [
+            new THREE.ConeGeometry(0.5,1.5,8), new THREE.BoxGeometry(1,1,1),
+            new THREE.CylinderGeometry(0,0.5,1.5,4), new THREE.TorusKnotGeometry(0.4,0.15,64,8)
+        ];
+        const skinGeo = skins[inventory.skin % skins.length];
+        gPlayer = new THREE.Mesh(skinGeo, new THREE.MeshPhongMaterial({color:0x00f2ea, emissive:0x111122}));
+        gPlayer.position.set(0,1,-2); gPlayer.rotation.x = Math.PI/2;
+        gScene.add(gPlayer);
+
+        if(window.innerWidth < 600) { gCam.position.set(0, 5, 12); gCam.rotation.x = -0.4; } 
+        else { gCam.position.set(0, 3, 8); gCam.rotation.x = -0.3; }
+
+        // Controls
+        document.addEventListener('mousemove', gMove);
+        document.addEventListener('touchmove', gTouch, {passive:false});
+        
+        gliderLoop();
+    }
+
+    function gMove(e) {
+        if(!isPlay || !gPlayer) return;
+        const limit = window.innerWidth < 600 ? 5 : 8;
+        const x = (e.clientX/window.innerWidth)*2-1;
+        gPlayer.position.x = x * limit;
+        gPlayer.rotation.z = -x * 0.5;
+    }
+    function gTouch(e) { e.preventDefault(); gMove(e.touches[0]); }
+
+    function gliderLoop() {
+        if(!isPlay) return;
+
+        // Spawn
+        if(Math.random()<0.03) {
+            const obs = new THREE.Mesh(new THREE.BoxGeometry(1.5,1.5,1.5), new THREE.MeshPhongMaterial({color:0xff4757}));
+            obs.position.set((Math.random()*16)-8, 1, -50); gScene.add(obs); gObstacles.push(obs);
+        }
+        if(Math.random()<0.05) {
+            const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.5), new THREE.MeshBasicMaterial({color:0xffff00}));
+            star.position.set((Math.random()*16)-8, 1.5, -50); gScene.add(star); gStars.push(star);
+        }
+
+        // Move
+        const pBox = new THREE.Box3().setFromObject(gPlayer);
+        for(let i=gObstacles.length-1; i>=0; i--) {
+            let o = gObstacles[i]; o.position.z += gSpeed;
+            if(new THREE.Box3().setFromObject(o).intersectsBox(pBox)) { gameOver(); return; }
+            if(o.position.z > 10) { gScene.remove(o); gObstacles.splice(i,1); }
+        }
+        for(let i=gStars.length-1; i>=0; i--) {
+            let s = gStars[i]; s.position.z += gSpeed; s.rotation.y += 0.1;
+            if(s.position.distanceTo(gPlayer.position) < 1.5) {
+                gScene.remove(s); gStars.splice(i,1);
+                inventory.dust++;
+                localStorage.setItem('ba_inventory', JSON.stringify(inventory));
+                document.getElementById('glider-dust-val').innerText = inventory.dust;
+            } else if(s.position.z > 10) { gScene.remove(s); gStars.splice(i,1); }
+        }
+
+        gSpeed += 0.0005; score += 0.5;
+        gRen.render(gScene, gCam);
+        gFrameId = requestAnimationFrame(gliderLoop);
+    }
+
+    function gameOver() {
+        isPlay = false;
+        document.getElementById('game-over').style.display = 'flex';
+        document.getElementById('score-final').innerText = Math.floor(score);
+        
+        // Save Score
+        let scores = JSON.parse(localStorage.getItem('brainArcadeV6') || '{}');
+        if(!scores.glider || Math.floor(score) > scores.glider) {
+            scores.glider = Math.floor(score);
+            localStorage.setItem('brainArcadeV6', JSON.stringify(scores));
+        }
+    }
+    // Add this inside initGlider() or at the bottom of the script
+window.addEventListener('resize', onWindowResize, false);
+
+function onWindowResize() {
+    if(!gCam || !gRen) return;
+    gCam.aspect = window.innerWidth / window.innerHeight;
+    gCam.updateProjectionMatrix();
+    gRen.setSize(window.innerWidth, window.innerHeight);
+}
+
+</script>
+</body>
+</html>
