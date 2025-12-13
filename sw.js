@@ -1,11 +1,14 @@
 const CACHE_NAME = 'brain-arcade-v6';
 const ASSETS = [
   './',
-  './index.html',        // IMPORTANT: Rename your main file to index.html
+  './index.html',
+  './admin.html',// IMPORTANT: Rename your main file to index.html
   './arcade.html',
   './cosmic.html',
   './manifest.json',
-  './icon-192.png',      // Make sure this file exists
+  './icon194.png',
+  './icon.png',
+  './icon512.png',// Make sure this file exists
   './icon-512.png',      // Make sure this file exists
   'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
   'https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@400;600&display=swap'
