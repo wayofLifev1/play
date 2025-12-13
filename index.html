@@ -4,6 +4,7 @@
     <meta charset="UTF-8">  
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">  
     <title>Brain Arcade v6: Galaxy Edition</title>  
+    <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@400;600&display=swap" rel="stylesheet">  
     <style>  
         :root {  
@@ -55,8 +56,8 @@
     <span style="font-size:1.2rem; margin-right:5px;">⬇️</span>
     INSTALL APP
 </button>
-
-                <a href="https://twolife-v1.github.io/my/updater.html" target="_blank" class="float-anim" 
+                
+                <a href="https://twolife-v1.github.io/my/updater.html" target="_blank" rel="noopener noreferrer" class="float-anim" 
                    style="flex:1; text-decoration:none; display:flex; align-items:center; justify-content:center; 
                           padding:8px 10px;
                           background: linear-gradient(45deg, #FFD700, #FFA500);
@@ -67,7 +68,7 @@
                    WaktuSolat
                 </a>
 
-                <a href="https://pipahcookiesapp.github.io/com/" target="_blank" class="float-anim" 
+                <a href="https://pipahcookiesapp.github.io/com/" target="_blank" rel="noopener noreferrer" class="float-anim" 
                    style="flex:1; text-decoration:none; display:flex; align-items:center; justify-content:center; 
                           padding:8px 10px;
                           background: linear-gradient(45deg, #FFD700, #FFA500);
@@ -126,7 +127,6 @@
         <iframe id="game-frame" src=""></iframe>
     </div>
 </div>  
-    <link rel="manifest" href="manifest.json">
 
 <script>
   if ('serviceWorker' in navigator) {
@@ -135,43 +135,98 @@
       .catch((err) => console.log('SW Failed:', err));
   }
 </script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+<script>
+    // 1. Config (Must match Admin)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCYPD6eFQvtwi6CMBkAbQ1SmkWA2qtby9s",
+      authDomain: "wofplay-123.firebaseapp.com",
+      databaseURL: "https://wofplay-123-default-rtdb.firebaseio.com",
+      projectId: "wofplay-123",
+      storageBucket: "wofplay-123.firebasestorage.app",
+      messagingSenderId: "716443688368",
+      appId: "1:716443688368:web:6ebd08d8d3a49f1c494a75"
+    };
+    
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
+    // 2. Track Visits (Launches)
+    const visitRef = db.ref('stats/visits');
+    visitRef.transaction(current => (current || 0) + 1);
 
-<script>  
-    // Variable to store the browser's install prompt
-let deferredPrompt;
-const installBtn = document.getElementById('install-btn');
-
-// 1. Listen for the browser saying "This app can be installed!"
-window.addEventListener('beforeinstallprompt', (e) => {
-    // Prevent the mini-infobar from appearing on mobile
-    e.preventDefault();
-    // Save the event so we can trigger it later
-    deferredPrompt = e;
-    // Reveal the button we added in Step 1
-    installBtn.style.display = 'flex';
-});
-
-// 2. Handle the button click
-installBtn.addEventListener('click', async () => {
-    if (deferredPrompt) {
-        // Show the native browser install prompt
-        deferredPrompt.prompt();
-        // Wait for the user to respond
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log(`User response: ${outcome}`);
-        // We can't use the prompt again, so clear it
-        deferredPrompt = null;
-        // Hide the button since it's installed or dismissed
-        installBtn.style.display = 'none';
+    // 3. Track Online Presence
+    // Generate a random ID for this session if one doesn't exist
+    let uid = localStorage.getItem('ba_uid');
+    if (!uid) {
+        uid = 'user_' + Math.floor(Math.random() * 100000);
+        localStorage.setItem('ba_uid', uid);
+        // If it's a new user, track install
+        db.ref('stats/installs').transaction(c => (c || 0) + 1);
     }
-});
 
-// 3. Optional: Hide button if app is already installed
-window.addEventListener('appinstalled', () => {
-    installBtn.style.display = 'none';
-    console.log('App successfully installed');
-});
+    // Detect Device Type
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const deviceType = isMobile ? (navigator.userAgent.includes('iPhone') ? 'iPhone' : 'Android') : 'PC/Desktop';
+
+    // Set Status
+    const myStatusRef = db.ref('status/' + uid);
+    
+    // When I disconnect (close app), set state to offline
+    myStatusRef.onDisconnect().set({ state: 'offline', last_seen: Date.now() });
+
+    // While I am here, set state to online
+    myStatusRef.set({
+        state: 'online',
+        device: deviceType,
+        last_seen: Date.now()
+    });
+</script>
+<script>  
+    
+       // --- UNIVERSAL INSTALL LOGIC (Android + iOS) ---
+
+    // 1. Detect iOS
+    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isInstalled = window.matchMedia('(display-mode: standalone)').matches;
+
+    // 2. Android/Chrome Logic
+    let deferredPrompt;
+    const installBtn = document.getElementById('install-btn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if(installBtn) installBtn.style.display = 'flex';
+    });
+
+    if(installBtn) {
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                deferredPrompt = null;
+                installBtn.style.display = 'none';
+            }
+        });
+    }
+
+    // 3. iOS Logic (Show Instructions if not installed)
+    if (isIOS && !isInstalled) {
+        const iosMsg = document.createElement('div');
+        iosMsg.style.cssText = "position:fixed; bottom:20px; left:50%; transform:translateX(-50%); width:90%; background:rgba(0,0,0,0.9); color:#fff; padding:15px; border-radius:15px; border:1px solid #bf00ff; text-align:center; font-size:0.9rem; z-index:9999; box-shadow:0 0 20px rgba(191,0,255,0.4);";
+        iosMsg.innerHTML = "To install on iOS:<br>Tap <span style='font-size:1.3rem'>⎋</span> Share &rarr; <b>Add to Home Screen</b>";
+        
+        const close = document.createElement('div');
+        close.innerText = "OK";
+        close.style.cssText = "margin-top:10px; color:#00f2ea; font-weight:bold; cursor:pointer; padding:5px;";
+        close.onclick = () => iosMsg.remove();
+        
+        iosMsg.appendChild(close);
+        document.body.appendChild(iosMsg);
+    }
+
 
     const scores = { memory:0, math:0, color:0, odd:0, order:0, dash:0, reflex:0, runner:0, glider:0 };  
     
@@ -195,7 +250,10 @@ window.addEventListener('appinstalled', () => {
         if(event.data === 'close_game') {
             document.getElementById('game-layer').style.display = 'none';
             document.getElementById('game-frame').src = '';
-            loadScores(); // Refresh scores on menu
+            
+            // FIX B: Added small delay to ensure LocalStorage saves 
+            // completely in the iframe before reading it here.
+            setTimeout(loadScores, 50); 
         }
     });
 
