@@ -1,8 +1,7 @@
 const CACHE_NAME = 'brain-arcade-v6';
 const ASSETS = [
   './',
-  './index.html',
-  './admin.html',// IMPORTANT: Rename your main file to index.html
+  './index.html',// IMPORTANT: Rename your main file to index.html
   './arcade.html',
   './cosmic.html',
   './manifest.json',
