@@ -3,7 +3,7 @@
 <head>  
     <meta charset="UTF-8">  
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">  
-    <title>Arcade Mini Games</title>  
+    <title>Arcade Mini Games (Fixed)</title>  
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@400;600&display=swap" rel="stylesheet">  
     <style>  
         /* Core Styles */
@@ -281,11 +281,11 @@
 
     // --- GAME LOGIC IMPLEMENTATIONS ---
 
-    // 1. MEMORY
-    let memSeq=[], userSeq=[], memGrid=2;
+    // 1. MEMORY (Fixed double tap issue)
+    let memSeq=[], userSeq=[], memGrid=2, memLock=false;
     function initMem() { memGrid=2; nextMem(); }
     async function nextMem() {
-        if(!isPlay) return; userSeq=[]; memSeq=[];
+        if(!isPlay) return; userSeq=[]; memSeq=[]; memLock=true; // Lock during watch
         if(diff>3) memGrid=3; if(diff>8) memGrid=4;
         const c=document.getElementById('grid-container'); c.innerHTML=''; c.style.gridTemplateColumns=`repeat(${memGrid},1fr)`;
         for(let i=0; i<memGrid*memGrid; i++){ let d=document.createElement('div'); d.className='tile'; d.id='m-'+i; d.onclick=()=>clickMem(i); c.appendChild(d); }
@@ -293,17 +293,21 @@
         c.style.pointerEvents='none'; document.getElementById('mem-lvl').innerText="WATCH";
         await new Promise(r=>setTimeout(r,500));
         for(let id of memSeq){ if(!isPlay)return; let el=document.getElementById('m-'+id); el.classList.add('lit'); Audio.play(500,'sine'); await new Promise(r=>setTimeout(r,400)); el.classList.remove('lit'); await new Promise(r=>setTimeout(r,100)); }
-        if(isPlay) { document.getElementById('mem-lvl').innerText="REPEAT"; c.style.pointerEvents='auto'; }
+        if(isPlay) { document.getElementById('mem-lvl').innerText="REPEAT"; c.style.pointerEvents='auto'; memLock=false; }
     }
     function clickMem(i) {
-        let el=document.getElementById('m-'+i); el.classList.add('lit'); setTimeout(()=>el.classList.remove('lit'),150);
+        if(memLock) return; // Prevent double taps
+        memLock = true;
+        let el=document.getElementById('m-'+i); el.classList.add('lit'); 
+        setTimeout(()=>{ el.classList.remove('lit'); memLock=false; }, 150); // Unlock quickly
+
         if(i===memSeq[userSeq.length]) {
             userSeq.push(i); Audio.play(800,'triangle');
             if(userSeq.length===memSeq.length) { updateScore(10*memGrid); diff++; setTimeout(nextMem,800); }
         } else gameOver("Wrong Tile");
     }
 
-    // 2. MATH
+    // 2. MATH (Fixed difficulty scaling)
     function initMath() { nextMath(); }
     function nextMath() {
         let n1=Math.floor(Math.random()*(5+diff*2)), n2=Math.floor(Math.random()*(5+diff*2)), ans=n1+n2;
@@ -313,42 +317,49 @@
         let b1=document.getElementById('m-opt1'), b2=document.getElementById('m-opt2');
         b1.innerText=corr?ans:fake; b1.onclick=()=>ansMath(corr);
         b2.innerText=!corr?ans:fake; b2.onclick=()=>ansMath(!corr);
-        setTimer('math-timer', Math.max(1.5, 5-diff*0.2));
+        // Smoother scaling: Start 5s, decay 5% per level
+        setTimer('math-timer', Math.max(1.5, 5 * Math.pow(0.95, diff)));
     }
     function ansMath(isC) { if(isC){ Audio.play(600); updateScore(10); diff++; nextMath(); } else gameOver("Wrong Answer"); }
 
-    // 3. COLOR
+    // 3. COLOR (Fixed difficulty scaling)
     const cols=[{n:'RED',h:'#ff4757'},{n:'BLUE',h:'#1e90ff'},{n:'GREEN',h:'#00e676'},{n:'YELLOW',h:'#ffa502'}]; let tgtH;
     function initCol() { let c=document.getElementById('color-grid'); cols.forEach(x=>{ let b=document.createElement('button'); b.className='color-btn'; b.style.backgroundColor=x.h; b.innerText=x.n; b.onclick=()=>ansCol(x.h); c.appendChild(b); }); nextCol(); }
     function nextCol() {
         let w=cols[Math.floor(Math.random()*4)], c=cols[Math.floor(Math.random()*4)];
         if(Math.random()>.7) c=w; tgtH=c.h;
         let el=document.getElementById('color-word'); el.innerText=w.n; el.style.color=c.h;
-        setTimer('color-timer', Math.max(1, 4-diff*0.15));
+        setTimer('color-timer', Math.max(1.0, 4 * Math.pow(0.96, diff)));
     }
     function ansCol(h) { if(h===tgtH){ Audio.play(600); updateScore(20); diff++; nextCol(); } else gameOver("Wrong Color"); }
 
-    // 4. ODD
+    // 4. ODD (Fixed difficulty scaling)
     const pairs=[['E','F'],['O','0'],['B','8'],['M','W'],['5','S']];
     function initOdd() { nextOdd(); }
     function nextOdd() {
         let gs=Math.min(5, 3+Math.floor(diff/3)), c=document.getElementById('odd-grid'); c.innerHTML=''; c.style.gridTemplateColumns=`repeat(${gs},1fr)`;
         let p=pairs[Math.floor(Math.random()*pairs.length)], m=p[0], o=p[1], idx=Math.floor(Math.random()*(gs*gs));
         for(let i=0;i<gs*gs;i++){ let d=document.createElement('div'); d.className='odd-tile'; d.innerText=i===idx?o:m; d.onclick=()=>{ if(i===idx){ Audio.play(700); updateScore(50); diff++; nextOdd(); } else gameOver("Wrong One"); }; c.appendChild(d); }
-        setTimer('odd-timer', Math.max(2, 6-diff*0.3));
+        setTimer('odd-timer', Math.max(2.0, 6 * Math.pow(0.95, diff)));
     }
 
-    // 5. ORDER
+    // 5. ORDER (Fixed infinite loop freeze)
     let nN=1, mN=5;
     function initOrder() { nextOrd(); }
     function nextOrd() {
         nN=1; mN=4+Math.floor(diff/2); document.getElementById('next-num').innerText=1;
         let c=document.getElementById('order-container'); c.innerHTML='';
         let positions=[], cw=c.clientWidth, ch=c.clientHeight;
+        
         for(let i=1;i<=mN;i++){
             let b=document.createElement('div'); b.className='order-bubble'; b.innerText=i; b.style.zIndex=100-i;
-            let safe=false, l, t;
-            while(!safe){ l=Math.random()*80+5; t=Math.random()*80+5; safe=true; for(let p of positions){ if(Math.hypot(l-p.x,t-p.y)<15) safe=false; } }
+            let safe=false, l, t, attempts=0;
+            // Loop protection: stop trying after 100 attempts
+            while(!safe && attempts < 100){ 
+                l=Math.random()*80+5; t=Math.random()*80+5; safe=true; 
+                for(let p of positions){ if(Math.hypot(l-p.x,t-p.y)<15) safe=false; }
+                attempts++;
+            }
             positions.push({x:l,y:t}); b.style.left=l+'%'; b.style.top=t+'%';
             b.onclick=()=>{ if(parseInt(b.innerText)===nN){ Audio.play(400+nN*50); b.remove(); nN++; document.getElementById('next-num').innerText=nN; if(nN>mN){ updateScore(mN*10); diff++; nextOrd(); } } else gameOver("Wrong Order"); };
             c.appendChild(b);
@@ -363,7 +374,7 @@
         let dirs=['U','D','L','R'], arr={'U':'⬆','D':'⬇','L':'⬅','R':'➡'};
         curDir=dirs[Math.floor(Math.random()*4)]; curCol=Math.random()>.5?'GREEN':'RED';
         let el=document.getElementById('dash-arrow'); el.innerText=arr[curDir]; el.style.color=curCol==='GREEN'?'#00e676':'#ff4757';
-        setTimer('dash-timer', Math.max(0.8, 2.5-diff*0.1));
+        setTimer('dash-timer', Math.max(0.8, 2.5 * Math.pow(0.95, diff)));
     }
     function checkDash(d) {
         let cD = (curCol==='GREEN') ? curDir : (curDir==='U'?'D':curDir==='D'?'U':curDir==='L'?'R':'L');
@@ -379,12 +390,12 @@
         document.querySelectorAll('.reflex-tile').forEach(t=>t.classList.remove('active-target'));
         let n; do{n=Math.floor(Math.random()*9);}while(n===rxTgt); rxTgt=n;
         document.getElementById('rx-'+rxTgt).classList.add('active-target');
-        setTimer('reflex-timer', Math.max(0.6, 2.0-diff*0.1));
+        setTimer('reflex-timer', Math.max(0.6, 2.0 * Math.pow(0.95, diff)));
     }
     function tapRx(i) { if(i===rxTgt){ Audio.play(700); updateScore(15); diff++; nextRx(); } else gameOver("Missed"); }
 
-    // 8. RUNNER (FIXED FOR MEMORY LEAK)
-    let rCanvas, rCtx, rDino, rObstacles, rFrame, rSpeed;
+    // 8. RUNNER (Major Physics Overhaul)
+    let rCanvas, rCtx, rDino, rObstacles, rFrame, rSpeed, rSpawnTimer;
 
     // GLOBAL LISTENERS FOR RUNNER (Only add once)
     document.addEventListener('keydown', (e) => {
@@ -394,7 +405,6 @@
     // Touch listener for canvas
     document.addEventListener('touchstart', (e) => {
         if(currentGame === 'runner' && isPlay) {
-            // Check if user touched the canvas or jump button
             if(e.target.id === 'runner-canvas' || e.target.innerText === 'JUMP!') {
                 e.preventDefault(); 
                 runnerJump();
@@ -404,43 +414,93 @@
 
     function initRunner() {
         rCanvas=document.getElementById('runner-canvas'); rCtx=rCanvas.getContext('2d');
-        rCtx.font = "30px Arial"; 
-        rDino={x:50,y:200,vy:0,w:30,h:30,g:true}; 
-        rObstacles=[]; 
-        rSpeed=4;
+        // Initial Dino State
+        rDino={
+            x:50, y:200, 
+            vy:0,        // Vertical Velocity
+            w:40, h:40,  // Hitbox size (approx)
+            grounding:true 
+        };
+        rObstacles=[];
+        rSpeed=5;        // Starting Speed
+        rSpawnTimer=0;   // Timer for obstacle spawning
         runLoop();
     }
-    function runnerJump(){ if(rDino.g && isPlay){ rDino.vy=-10; rDino.g=false; Audio.play(300); } }
+
+    function runnerJump(){ 
+        if(rDino.grounding && isPlay){ 
+            rDino.vy = -13; // Jump Power (Negative goes up)
+            rDino.grounding = false; 
+            Audio.play(300); 
+        } 
+    }
     
     function runLoop(){
         if(!isPlay) return;
         rCtx.clearRect(0,0,600,250);
         
-        // Dino Physics
-        rDino.vy+=0.6; rDino.y+=rDino.vy; 
-        if(rDino.y>200){rDino.y=200;rDino.vy=0;rDino.g=true;}
+        // 1. Draw Ground Line
+        rCtx.beginPath();
+        rCtx.moveTo(0, 235);
+        rCtx.lineTo(600, 235);
+        rCtx.strokeStyle = 'rgba(255,255,255,0.2)';
+        rCtx.lineWidth = 2;
+        rCtx.stroke();
+
+        // 2. Physics (Gravity)
+        rDino.vy += 0.8; // Gravity pulls down
+        rDino.y += rDino.vy; 
+
+        // Floor Collision
+        if(rDino.y > 200){
+            rDino.y = 200;
+            rDino.vy = 0;
+            rDino.grounding = true;
+        }
         
-        // Spawn Obstacles
-        if(Math.random()<0.02) rObstacles.push({x:600,y:210});
+        // 3. Spawning Logic (Timer Based for consistent gaps)
+        rSpawnTimer--;
+        if(rSpawnTimer <= 0) {
+            rObstacles.push({x:600, y:205, w:30, h:40});
+            // Randomize next spawn time based on speed to ensure jumpable gaps
+            // Faster speed = slightly faster spawns, but kept proportional
+            let minGap = 70; 
+            let maxGap = 140; 
+            rSpawnTimer = Math.floor(Math.random() * (maxGap - minGap) + minGap); 
+        }
         
-        // Draw Dino
-        rCtx.fillStyle='#bf00ff'; rCtx.fillRect(rDino.x,rDino.y,rDino.w,rDino.h);
+        // 4. Draw Dino
+        rCtx.font = "40px Arial";
+        rCtx.textAlign = "left";
+        rCtx.fillText('🚀', rDino.x, rDino.y + 35); // +35 to align text baseline with hitbox
         
-        // Draw Obstacles & Check Collision
+        // 5. Obstacles & Collision
         for(let i=rObstacles.length-1; i>=0; i--) {
             let o = rObstacles[i];
             o.x -= rSpeed;
-            rCtx.fillText('🌵', o.x, o.y+20);
+            rCtx.fillText('🌵', o.x, o.y + 30);
             
-            // Collision Logic
-            if(rDino.x < o.x + 20 && rDino.x + 30 > o.x && rDino.y < o.y + 20) {
+            // Collision Detection (AABB with padding for "forgiveness")
+            // We shrink the hitbox by 10px on all sides to avoid "cheap" deaths
+            if(
+                rDino.x < o.x + o.w - 10 &&
+                rDino.x + rDino.w - 10 > o.x + 10 &&
+                rDino.y < o.y + o.h - 10 &&
+                rDino.y + rDino.h - 10 > o.y + 10
+            ) {
                 gameOver("Crashed");
                 return;
             }
-            if(o.x < -20) rObstacles.splice(i,1);
+
+            // Cleanup off-screen
+            if(o.x < -50) rObstacles.splice(i,1);
         }
 
-        updateScore(0.1); rSpeed=4+score/100;
+        // 6. Difficulty Scaling
+        updateScore(0.05); 
+        // Cap speed at 12 to keep it playable
+        rSpeed = Math.min(12, 5 + (score/200)); 
+
         rFrame=requestAnimationFrame(runLoop);
     }
 
