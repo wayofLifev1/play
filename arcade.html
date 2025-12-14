@@ -3,17 +3,29 @@
 <head>  
     <meta charset="UTF-8">  
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">  
-    <title>Arcade Mini Games (Fixed)</title>  
+    <title>Arcade Mini Games</title>  
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@400;600&display=swap" rel="stylesheet">  
     <style>  
-        /* Core Styles */
-        :root { --bg-dark: #05050a; --cyan: #00f2ea; --purple: #bf00ff; --pink: #ff0080; --green: #00e676; --red: #ff4757; --yellow: #f1c40f; --font-head: 'Orbitron', sans-serif; }  
-        body { margin: 0; background-color: var(--bg-dark); color: #fff; font-family: 'Poppins', sans-serif; overflow: hidden; touch-action: none; user-select: none; }  
+        /* Core Styles & Variables (Dynamic via JS) */
+        :root { 
+            --bg-dark: #05050a; 
+            --primary: #00f2ea; /* Default Cyan */
+            --secondary: #bf00ff; /* Default Purple */
+            --accent: #ff0080; 
+            --font-head: 'Orbitron', sans-serif; 
+        }  
         
+        body { margin: 0; background-color: var(--bg-dark); color: #fff; font-family: 'Poppins', sans-serif; overflow: hidden; touch-action: none; user-select: none; transition: background 0.5s; }  
+        
+        /* Alive Title Animation */
+        @keyframes breathe { 0%{text-shadow:0 0 10px var(--primary);} 50%{text-shadow:0 0 25px var(--primary), 0 0 10px var(--secondary);} 100%{text-shadow:0 0 10px var(--primary);} }
+        h2 { animation: breathe 3s infinite; }
+
         /* HUD */
-        #hud { position: absolute; top: 0; width: 100%; height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; box-sizing: border-box; z-index: 100; background: rgba(0,0,0,0.5); }
-        .btn-small { background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); color:white; font-family: var(--font-head); cursor: pointer; }
-        
+        #hud { position: absolute; top: 0; width: 100%; height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; box-sizing: border-box; z-index: 100; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .btn-small { background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 15px; border: 1px solid var(--primary); color:white; font-family: var(--font-head); cursor: pointer; }
+        .dust-counter { color: #FFD700; font-family: var(--font-head); font-size: 1.1rem; text-shadow: 0 0 10px #FFD700; }
+
         /* Screens */
         .screen { display: none; width: 100vw; height: 100vh; flex-direction: column; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; }
         .active { display: flex; }
@@ -23,89 +35,106 @@
 
         /* Common Game Elements */
         .timer-bar-bg { width: 90%; max-width: 400px; height: 6px; background: rgba(255,255,255,0.1); margin-bottom: 20px; border-radius: 3px; overflow:hidden; }
-        .timer-bar-fill { height: 100%; width: 100%; transition: width 0.02s linear; }
+        .timer-bar-fill { height: 100%; width: 100%; transition: width 0.02s linear; background: var(--primary); }
         
+        /* STARDUST FLOATER (For DOM Games) */
+        .floating-dust {
+            position: absolute; font-size: 2rem; z-index: 999; cursor: pointer;
+            filter: drop-shadow(0 0 10px gold);
+            animation: floatAcross 4s linear forwards, spin 2s infinite linear;
+        }
+        @keyframes floatAcross { 0%{left:-50px;} 100%{left:110vw;} }
+        @keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
+
         /* Game Specific CSS */
-        #grid-container { display: grid; gap: 10px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 20px; }
-        .tile { width: 60px; height: 60px; background: rgba(255,255,255,0.1); border-radius: 10px; }
-        .tile.lit { background: var(--cyan); box-shadow: 0 0 20px var(--cyan); transform: scale(1.1); }
+        #grid-container { display: grid; gap: 10px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        .tile { width: 60px; height: 60px; background: rgba(255,255,255,0.1); border-radius: 10px; border: 1px solid transparent; }
+        .tile.lit { background: var(--primary); box-shadow: 0 0 20px var(--primary); transform: scale(1.1); border-color: #fff; }
         
-        #math-problem { font-size: 4rem; font-family: var(--font-head); margin: 30px 0; }
+        #math-problem { font-size: 4rem; font-family: var(--font-head); margin: 30px 0; color: var(--primary); }
         .math-options { display: flex; gap: 20px; }
-        .math-btn { font-size: 2rem; padding: 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 15px; font-family: var(--font-head); min-width: 100px; }
+        .math-btn { font-size: 2rem; padding: 20px; background: rgba(255,255,255,0.1); border: 1px solid var(--secondary); color: white; border-radius: 15px; font-family: var(--font-head); min-width: 100px; }
         
         #color-word { font-size: 3.5rem; font-family: var(--font-head); font-weight: 900; margin-bottom: 30px; }
         .color-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .color-btn { width: 140px; height: 60px; border-radius: 10px; border:none; font-family: var(--font-head); color: white; font-weight: bold; font-size: 1.1rem; }
+        .color-btn { width: 140px; height: 60px; border-radius: 10px; border:none; font-family: var(--font-head); color: white; font-weight: bold; font-size: 1.1rem; border: 1px solid rgba(255,255,255,0.2); }
         
-        .grid-game { display: grid; gap: 8px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 15px; }
+        .grid-game { display: grid; gap: 8px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 15px; border: 1px solid var(--primary); }
         .odd-tile { width: 50px; height: 50px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-size: 1.4rem; border-radius: 8px; cursor: pointer; }
         
-        #order-container { position: relative; width: 95%; height: 60vh; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
-        .order-bubble { position: absolute; width: 50px; height: 50px; background: var(--cyan); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-head); color: #000; font-weight: bold; font-size: 1.5rem; animation: pulse 0.5s ease-out; }
+        #order-container { position: relative; width: 95%; height: 60vh; border: 1px solid var(--primary); border-radius: 20px; background: rgba(0,0,0,0.2); }
+        .order-bubble { position: absolute; width: 50px; height: 50px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-head); color: #000; font-weight: bold; font-size: 1.5rem; animation: pulse 0.5s ease-out; box-shadow: 0 0 15px var(--primary); }
         @keyframes pulse { 0% {transform:scale(0);} 80% {transform:scale(1.1);} 100% {transform:scale(1);} }
 
-        #dash-arrow { font-size: 8rem; margin-bottom: 20px; }
+        #dash-arrow { font-size: 8rem; margin-bottom: 20px; filter: drop-shadow(0 0 10px var(--secondary)); }
         .dpad { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-        .dpad-btn { width: 60px; height: 60px; background: rgba(0,242,234,0.1); border: 1px solid var(--cyan); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border-radius: 10px; }
+        .dpad-btn { width: 60px; height: 60px; background: rgba(255,255,255,0.05); border: 1px solid var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border-radius: 10px; color: var(--primary); }
         .dpad-up { grid-column: 2; } .dpad-left { grid-column: 1; grid-row: 2; } .dpad-down { grid-column: 2; grid-row: 2; } .dpad-right { grid-column: 3; grid-row: 2; }
 
-        .reflex-tile { width:80px; height:80px; background: rgba(255,0,128,0.1); border-radius: 10px; border: 1px solid rgba(255,0,128,0.3); }
-        .reflex-tile.active-target { background: var(--pink); box-shadow: 0 0 30px var(--pink); border-color: white; transform: scale(1.05); }
+        .reflex-tile { width:80px; height:80px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); }
+        .reflex-tile.active-target { background: var(--accent); box-shadow: 0 0 30px var(--accent); border-color: white; transform: scale(1.05); }
 
-        canvas#runner-canvas { background: rgba(0,0,0,0.3); border: 2px solid var(--purple); border-radius: 10px; width: 95%; max-width: 600px; }
+        canvas#runner-canvas { background: rgba(0,0,0,0.3); border: 2px solid var(--secondary); border-radius: 10px; width: 95%; max-width: 600px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
 
         /* Overlays */
         #countdown, #game-over { position: fixed; top:0; left:0; width:100%; height:100%; display:none; align-items:center; justify-content:center; flex-direction: column; background: rgba(5,5,10,0.95); z-index: 200; backdrop-filter: blur(10px); }
-        #countdown-text { font-size: 8rem; font-family: var(--font-head); color: var(--cyan); }
+        #countdown-text { font-size: 8rem; font-family: var(--font-head); color: var(--primary); }
+        
+        /* Notification */
+        #notif-area { position: absolute; top: 70px; width: 100%; text-align: center; pointer-events: none; z-index: 9999; }
+        .fly-msg { font-family: var(--font-head); font-weight: bold; font-size: 1.5rem; animation: fadeUp 1s forwards; text-shadow: 0 0 5px #000; }
+        @keyframes fadeUp { 0%{opacity:0; transform:translateY(20px);} 20%{opacity:1;} 100%{opacity:0; transform:translateY(-50px);} }
     </style>
 </head>  
 <body>  
 
     <div id="error-msg"></div>
+    <div id="notif-area"></div>
 
     <div id="hud">
-        <div id="score-disp" style="font-family: var(--font-head); font-size: 1.2rem;">SCORE: 0</div>
+        <div id="score-disp" style="font-family: var(--font-head); font-size: 1.2rem; color:var(--primary);">SCORE: 0</div>
+        <div class="dust-counter">✨ <span id="dust-val">0</span></div>
         <button class="btn-small" onclick="exitGame()">EXIT</button>
     </div>
 
     <div id="countdown"><div id="countdown-text">3</div></div>
 
     <div id="game-over">
-        <h2 style="color:var(--red); font-size: 3rem; margin:0; font-family: var(--font-head);">GAME OVER</h2>
+        <h2 style="color:#ff4757; font-size: 3rem; margin:0; font-family: var(--font-head);">GAME OVER</h2>
         <p id="fail-reason" style="margin-bottom: 20px; opacity: 0.8;"></p>
-        <div style="background: rgba(255,255,255,0.1); padding: 10px 40px; border-radius: 10px;">
+        <div style="background: rgba(255,255,255,0.1); padding: 10px 40px; border-radius: 10px; text-align: center;">
             <div style="font-size:0.8rem; color:#aaa;">FINAL SCORE</div>
-            <div id="final-score" style="font-size: 3rem; font-family: var(--font-head); color: var(--cyan);">0</div>
+            <div id="final-score" style="font-size: 3rem; font-family: var(--font-head); color: var(--primary);">0</div>
+            <div style="margin-top:5px; color:#FFD700; font-weight:bold;">COLLECTED: <span id="final-dust">0</span> ✨</div>
         </div>
-        <button class="btn-small" style="margin-top:20px; padding: 15px 40px; background: var(--cyan); color: #000; border:none; font-weight:bold;" onclick="location.reload()">RETRY</button>
+        <button class="btn-small" style="margin-top:20px; padding: 15px 40px; background: var(--primary); color: #000; border:none; font-weight:bold;" onclick="location.reload()">RETRY</button>
         <button class="btn-small" style="margin-top:10px; border:none; background: transparent;" onclick="exitGame()">Back to Menu</button>
     </div>
 
-    <div id="game-memory" class="screen"><h2 id="mem-lvl" style="font-family:var(--font-head); color:var(--cyan);">WATCH</h2><div id="grid-container"></div></div>
+    <div id="game-memory" class="screen"><h2 id="mem-lvl" style="font-family:var(--font-head); color:var(--primary);">WATCH</h2><div id="grid-container"></div></div>
 
     <div id="game-math" class="screen">
-        <div class="timer-bar-bg"><div id="math-timer" class="timer-bar-fill" style="background:var(--purple);"></div></div>
+        <div class="timer-bar-bg"><div id="math-timer" class="timer-bar-fill"></div></div>
         <div id="math-problem"></div>
         <div class="math-options"><button class="math-btn" id="m-opt1"></button><button class="math-btn" id="m-opt2"></button></div>
     </div>
 
     <div id="game-color" class="screen">
-        <div class="timer-bar-bg"><div id="color-timer" class="timer-bar-fill" style="background:var(--yellow);"></div></div>
+        <div class="timer-bar-bg"><div id="color-timer" class="timer-bar-fill"></div></div>
         <div id="color-word">WORD</div>
         <div class="color-controls" id="color-grid"></div>
     </div>
 
-    <div id="game-odd" class="screen"><div class="timer-bar-bg"><div id="odd-timer" class="timer-bar-fill" style="background:white;"></div></div><div id="odd-grid" class="grid-game"></div></div>
+    <div id="game-odd" class="screen"><div class="timer-bar-bg"><div id="odd-timer" class="timer-bar-fill"></div></div><div id="odd-grid" class="grid-game"></div></div>
 
     <div id="game-order" class="screen">
-        <div class="timer-bar-bg"><div id="order-timer" class="timer-bar-fill" style="background:var(--cyan);"></div></div>
-        <h2 style="font-family:var(--font-head); margin:0 0 10px 0;">TAP: <span id="next-num" style="color:var(--cyan); font-size:2rem;">1</span></h2>
+        <div class="timer-bar-bg"><div id="order-timer" class="timer-bar-fill"></div></div>
+        <h2 style="font-family:var(--font-head); margin:0 0 10px 0;">TAP: <span id="next-num" style="color:var(--primary); font-size:2rem;">1</span></h2>
         <div id="order-container"></div>
     </div>
 
     <div id="game-dash" class="screen">
-        <div class="timer-bar-bg"><div id="dash-timer" class="timer-bar-fill" style="background:var(--green);"></div></div>
+        <div class="timer-bar-bg"><div id="dash-timer" class="timer-bar-fill"></div></div>
         <div style="margin-bottom:10px; color:#aaa; font-size:0.8rem;">GREEN=Follow | RED=Opposite</div>
         <div id="dash-arrow">⬆</div>
         <div class="dpad">
@@ -117,45 +146,59 @@
     </div>
 
     <div id="game-reflex" class="screen">
-        <div class="timer-bar-bg"><div id="reflex-timer" class="timer-bar-fill" style="background:var(--pink);"></div></div>
+        <div class="timer-bar-bg"><div id="reflex-timer" class="timer-bar-fill"></div></div>
         <div id="reflex-grid" class="grid-game" style="grid-template-columns: repeat(3, 1fr);"></div>
     </div>
 
     <div id="game-runner" class="screen">
-        <h2 style="font-family:var(--font-head); color:var(--purple);">ROCKET RUN</h2>
+        <h2 style="font-family:var(--font-head); color:var(--secondary);">ROCKET RUN</h2>
         <canvas id="runner-canvas" width="600" height="250"></canvas>
-        <button class="btn-small" style="margin-top:20px; padding:20px 50px; background:var(--purple); border:none;" onclick="runnerJump()">JUMP!</button>
+        <button class="btn-small" style="margin-top:20px; padding:20px 50px; background:var(--secondary); border:none;" onclick="runnerJump()">JUMP!</button>
     </div>
 
 <script>
-    // CORE LOGIC
+    // --- SKIN & THEME MANAGER ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentSkin = urlParams.get('skin') || 'default';
+    
+    // Apply Skin Logic
+    const root = document.documentElement;
+    if(currentSkin === 'gold') {
+        root.style.setProperty('--primary', '#FFD700');   // Gold
+        root.style.setProperty('--secondary', '#FFA500'); // Orange
+        root.style.setProperty('--accent', '#FFFFE0');    // Light Yellow
+        root.style.setProperty('--bg-dark', '#1a1100');   // Dark Gold BG
+    } else if(currentSkin === 'neon') {
+        root.style.setProperty('--primary', '#ff00ff');   // Hot Pink
+        root.style.setProperty('--secondary', '#00ff00');// Lime
+        root.style.setProperty('--accent', '#00f2ea');    // Cyan
+        root.style.setProperty('--bg-dark', '#1a001a');   // Dark Purple BG
+    }
+
+    // --- GAME STATE ---
     let currentGame = '';
     let score = 0;
+    let dustSession = 0;
     let diff = 1;
     let isPlay = false;
     let timerInterval = null;
-    
-    // SAFE Audio Context (Lazy Load)
+    let dustTimer = null;
+
+    // --- AUDIO SYSTEM ---
     const Audio = {
         ctx: null,
         play: function(freq, type='sine') {
             try {
-                if(!this.ctx) {
-                    this.ctx = new (window.AudioContext||window.webkitAudioContext)();
-                }
+                if(!this.ctx) this.ctx = new (window.AudioContext||window.webkitAudioContext)();
                 if(this.ctx.state === 'suspended') this.ctx.resume();
-                
                 const o = this.ctx.createOscillator();
                 const g = this.ctx.createGain();
-                o.type = type; 
-                o.frequency.value = freq;
+                o.type = type; o.frequency.value = freq;
                 g.gain.setValueAtTime(0.1, this.ctx.currentTime);
                 g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime+0.1);
-                o.connect(g); 
-                g.connect(this.ctx.destination);
-                o.start(); 
-                o.stop(this.ctx.currentTime+0.1);
-            } catch(e) { console.log('Audio Blocked'); }
+                o.connect(g); g.connect(this.ctx.destination);
+                o.start(); o.stop(this.ctx.currentTime+0.1);
+            } catch(e) {}
         }
     };
 
@@ -165,35 +208,22 @@
     }
 
     function init() {
-        try {
-            const urlParams = new URLSearchParams(window.location.search);
-            currentGame = urlParams.get('game');
-            
-            // Hide all screens
-            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-            
-            if(!currentGame) {
-                showError("No Game Specified");
-                return;
-            }
+        currentGame = urlParams.get('game');
+        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+        
+        if(!currentGame) return showError("No Game Specified");
 
-            // Show specific game screen
-            const screen = document.getElementById(`game-${currentGame}`);
-            if(screen) {
-                screen.classList.add('active');
-                startCountdown();
-            } else {
-                showError("Game '" + currentGame + "' Not Found");
-                setTimeout(exitGame, 2000);
-            }
-        } catch(e) {
-            showError(e.message);
+        const screen = document.getElementById(`game-${currentGame}`);
+        if(screen) {
+            screen.classList.add('active');
+            startCountdown();
+        } else {
+            showError("Game '" + currentGame + "' Not Found");
+            setTimeout(exitGame, 2000);
         }
     }
 
-    function exitGame() {
-        try { window.parent.postMessage('close_game', '*'); } catch(e){}
-    }
+    function exitGame() { window.parent.postMessage('close_game', '*'); }
 
     function startCountdown() {
         const cd = document.getElementById('countdown');
@@ -203,20 +233,18 @@
         
         let int = setInterval(() => {
             n--;
-            if(n > 0) {
-                txt.innerText = n; Audio.play(400, 'square');
-            } else if (n === 0) {
-                txt.innerText = "GO"; Audio.play(800, 'square');
-            } else {
-                clearInterval(int);
-                cd.style.display = 'none';
-                startGame();
-            }
+            if(n > 0) { txt.innerText = n; Audio.play(400, 'square'); }
+            else if (n === 0) { txt.innerText = "GO"; Audio.play(800, 'square'); }
+            else { clearInterval(int); cd.style.display = 'none'; startGame(); }
         }, 600);
     }
 
     function startGame() {
         isPlay = true; score = 0; diff = 1; updateScore(0);
+        
+        // STARDUST SPAWNER (Global for DOM games)
+        if(currentGame !== 'runner') startStardustSpawner();
+
         try {
             if(currentGame === 'memory') initMem();
             else if(currentGame === 'math') initMath();
@@ -226,9 +254,7 @@
             else if(currentGame === 'dash') initDash();
             else if(currentGame === 'reflex') initReflex();
             else if(currentGame === 'runner') initRunner();
-        } catch(e) {
-            showError("Start Failed: " + e.message);
-        }
+        } catch(e) { showError(e.message); }
     }
 
     function updateScore(add) {
@@ -236,27 +262,63 @@
         document.getElementById('score-disp').innerText = "SCORE: " + Math.floor(score);
     }
 
+    function collectDust() {
+        dustSession++;
+        document.getElementById('dust-val').innerText = dustSession;
+        Audio.play(1200, 'sine'); // High pitch bling
+        
+        // Show visual +1
+        const n = document.createElement('div');
+        n.className = 'fly-msg'; n.innerText = "+1 ✨"; n.style.color = '#FFD700';
+        document.getElementById('notif-area').appendChild(n);
+        setTimeout(() => n.remove(), 1000);
+
+        // Tell Parent
+        window.parent.postMessage({type: 'stardust_collected'}, '*');
+    }
+
+    // --- STARDUST SPAWNER (DOM GAMES) ---
+    function startStardustSpawner() {
+        clearInterval(dustTimer);
+        dustTimer = setInterval(() => {
+            if(!isPlay) return;
+            // 20% Chance every 3 seconds to spawn dust
+            if(Math.random() < 0.2) {
+                const d = document.createElement('div');
+                d.className = 'floating-dust';
+                d.innerText = '✨';
+                d.style.top = (Math.random() * 80 + 10) + 'vh'; // Random vertical pos
+                d.onclick = function() {
+                    collectDust();
+                    d.remove();
+                };
+                document.body.appendChild(d);
+                // Clean up after animation
+                setTimeout(() => { if(d.parentNode) d.remove(); }, 4000);
+            }
+        }, 3000);
+    }
+
     function gameOver(reason) {
         if(!isPlay) return;
         isPlay = false;
         clearInterval(timerInterval);
-        if(rFrame) cancelAnimationFrame(rFrame); // Runner stop
+        clearInterval(dustTimer);
+        if(rFrame) cancelAnimationFrame(rFrame);
         
         Audio.play(150, 'sawtooth');
         document.getElementById('fail-reason').innerText = reason;
         document.getElementById('final-score').innerText = Math.floor(score);
+        document.getElementById('final-dust').innerText = dustSession;
         document.getElementById('game-over').style.display = 'flex';
         
-        // Save Score locally (SAFELY)
         try {
             let scores = JSON.parse(localStorage.getItem('brainArcadeV6') || '{}');
             if(!scores[currentGame] || score > scores[currentGame]) {
                 scores[currentGame] = Math.floor(score);
                 localStorage.setItem('brainArcadeV6', JSON.stringify(scores));
             }
-        } catch(e) {
-            console.log("Storage blocked by browser privacy settings.");
-        }
+        } catch(e) {}
     }
 
     function setTimer(id, sec) {
@@ -270,22 +332,20 @@
             let elapsed = (performance.now() - start) / 1000;
             let pct = 100 - (elapsed / sec) * 100;
             if(pct <= 0) {
-                clearInterval(timerInterval);
-                el.style.width = '0%';
-                gameOver("Time Up!");
+                clearInterval(timerInterval); el.style.width = '0%'; gameOver("Time Up!");
             } else {
                 el.style.width = pct + '%';
             }
         }, 16);
     }
 
-    // --- GAME LOGIC IMPLEMENTATIONS ---
+    // --- MINI GAME LOGIC ---
 
-    // 1. MEMORY (Fixed double tap issue)
+    // 1. MEMORY
     let memSeq=[], userSeq=[], memGrid=2, memLock=false;
     function initMem() { memGrid=2; nextMem(); }
     async function nextMem() {
-        if(!isPlay) return; userSeq=[]; memSeq=[]; memLock=true; // Lock during watch
+        if(!isPlay) return; userSeq=[]; memSeq=[]; memLock=true;
         if(diff>3) memGrid=3; if(diff>8) memGrid=4;
         const c=document.getElementById('grid-container'); c.innerHTML=''; c.style.gridTemplateColumns=`repeat(${memGrid},1fr)`;
         for(let i=0; i<memGrid*memGrid; i++){ let d=document.createElement('div'); d.className='tile'; d.id='m-'+i; d.onclick=()=>clickMem(i); c.appendChild(d); }
@@ -296,18 +356,16 @@
         if(isPlay) { document.getElementById('mem-lvl').innerText="REPEAT"; c.style.pointerEvents='auto'; memLock=false; }
     }
     function clickMem(i) {
-        if(memLock) return; // Prevent double taps
-        memLock = true;
+        if(memLock) return; memLock = true;
         let el=document.getElementById('m-'+i); el.classList.add('lit'); 
-        setTimeout(()=>{ el.classList.remove('lit'); memLock=false; }, 150); // Unlock quickly
-
+        setTimeout(()=>{ el.classList.remove('lit'); memLock=false; }, 150);
         if(i===memSeq[userSeq.length]) {
             userSeq.push(i); Audio.play(800,'triangle');
             if(userSeq.length===memSeq.length) { updateScore(10*memGrid); diff++; setTimeout(nextMem,800); }
         } else gameOver("Wrong Tile");
     }
 
-    // 2. MATH (Fixed difficulty scaling)
+    // 2. MATH
     function initMath() { nextMath(); }
     function nextMath() {
         let n1=Math.floor(Math.random()*(5+diff*2)), n2=Math.floor(Math.random()*(5+diff*2)), ans=n1+n2;
@@ -317,12 +375,11 @@
         let b1=document.getElementById('m-opt1'), b2=document.getElementById('m-opt2');
         b1.innerText=corr?ans:fake; b1.onclick=()=>ansMath(corr);
         b2.innerText=!corr?ans:fake; b2.onclick=()=>ansMath(!corr);
-        // Smoother scaling: Start 5s, decay 5% per level
         setTimer('math-timer', Math.max(1.5, 5 * Math.pow(0.95, diff)));
     }
     function ansMath(isC) { if(isC){ Audio.play(600); updateScore(10); diff++; nextMath(); } else gameOver("Wrong Answer"); }
 
-    // 3. COLOR (Fixed difficulty scaling)
+    // 3. COLOR
     const cols=[{n:'RED',h:'#ff4757'},{n:'BLUE',h:'#1e90ff'},{n:'GREEN',h:'#00e676'},{n:'YELLOW',h:'#ffa502'}]; let tgtH;
     function initCol() { let c=document.getElementById('color-grid'); cols.forEach(x=>{ let b=document.createElement('button'); b.className='color-btn'; b.style.backgroundColor=x.h; b.innerText=x.n; b.onclick=()=>ansCol(x.h); c.appendChild(b); }); nextCol(); }
     function nextCol() {
@@ -333,7 +390,7 @@
     }
     function ansCol(h) { if(h===tgtH){ Audio.play(600); updateScore(20); diff++; nextCol(); } else gameOver("Wrong Color"); }
 
-    // 4. ODD (Fixed difficulty scaling)
+    // 4. ODD
     const pairs=[['E','F'],['O','0'],['B','8'],['M','W'],['5','S']];
     function initOdd() { nextOdd(); }
     function nextOdd() {
@@ -343,23 +400,17 @@
         setTimer('odd-timer', Math.max(2.0, 6 * Math.pow(0.95, diff)));
     }
 
-    // 5. ORDER (Fixed infinite loop freeze)
+    // 5. ORDER
     let nN=1, mN=5;
     function initOrder() { nextOrd(); }
     function nextOrd() {
         nN=1; mN=4+Math.floor(diff/2); document.getElementById('next-num').innerText=1;
         let c=document.getElementById('order-container'); c.innerHTML='';
-        let positions=[], cw=c.clientWidth, ch=c.clientHeight;
-        
+        let positions=[];
         for(let i=1;i<=mN;i++){
             let b=document.createElement('div'); b.className='order-bubble'; b.innerText=i; b.style.zIndex=100-i;
             let safe=false, l, t, attempts=0;
-            // Loop protection: stop trying after 100 attempts
-            while(!safe && attempts < 100){ 
-                l=Math.random()*80+5; t=Math.random()*80+5; safe=true; 
-                for(let p of positions){ if(Math.hypot(l-p.x,t-p.y)<15) safe=false; }
-                attempts++;
-            }
+            while(!safe && attempts < 100){ l=Math.random()*80+5; t=Math.random()*80+5; safe=true; for(let p of positions){ if(Math.hypot(l-p.x,t-p.y)<15) safe=false; } attempts++; }
             positions.push({x:l,y:t}); b.style.left=l+'%'; b.style.top=t+'%';
             b.onclick=()=>{ if(parseInt(b.innerText)===nN){ Audio.play(400+nN*50); b.remove(); nN++; document.getElementById('next-num').innerText=nN; if(nN>mN){ updateScore(mN*10); diff++; nextOrd(); } } else gameOver("Wrong Order"); };
             c.appendChild(b);
@@ -372,7 +423,7 @@
     function initDash() { nextDash(); }
     function nextDash() {
         let dirs=['U','D','L','R'], arr={'U':'⬆','D':'⬇','L':'⬅','R':'➡'};
-        curDir=dirs[Math.floor(Math.random()*4)]; curCol=Math.random()>.5?'GREEN':'RED';
+        curDir=dirs[Math.floor(Math.random()*(4))]; curCol=Math.random()>.5?'GREEN':'RED';
         let el=document.getElementById('dash-arrow'); el.innerText=arr[curDir]; el.style.color=curCol==='GREEN'?'#00e676':'#ff4757';
         setTimer('dash-timer', Math.max(0.8, 2.5 * Math.pow(0.95, diff)));
     }
@@ -394,117 +445,83 @@
     }
     function tapRx(i) { if(i===rxTgt){ Audio.play(700); updateScore(15); diff++; nextRx(); } else gameOver("Missed"); }
 
-    // 8. RUNNER (Major Physics Overhaul)
-    let rCanvas, rCtx, rDino, rObstacles, rFrame, rSpeed, rSpawnTimer;
+    // 8. RUNNER (With integrated Stardust)
+    let rCanvas, rCtx, rDino, rObstacles, rDust, rFrame, rSpeed, rSpawnTimer, rDustTimer;
 
-    // GLOBAL LISTENERS FOR RUNNER (Only add once)
-    document.addEventListener('keydown', (e) => {
-        if(currentGame === 'runner' && isPlay && e.code === 'Space') runnerJump();
-    });
-    
-    // Touch listener for canvas
-    document.addEventListener('touchstart', (e) => {
-        if(currentGame === 'runner' && isPlay) {
-            if(e.target.id === 'runner-canvas' || e.target.innerText === 'JUMP!') {
-                e.preventDefault(); 
-                runnerJump();
-            }
-        }
-    }, {passive:false});
+    document.addEventListener('keydown', (e) => { if(currentGame === 'runner' && isPlay && e.code === 'Space') runnerJump(); });
+    document.addEventListener('touchstart', (e) => { if(currentGame === 'runner' && isPlay && (e.target.id === 'runner-canvas' || e.target.innerText === 'JUMP!')) { e.preventDefault(); runnerJump(); } }, {passive:false});
 
     function initRunner() {
         rCanvas=document.getElementById('runner-canvas'); rCtx=rCanvas.getContext('2d');
-        // Initial Dino State
-        rDino={
-            x:50, y:200, 
-            vy:0,        // Vertical Velocity
-            w:40, h:40,  // Hitbox size (approx)
-            grounding:true 
-        };
-        rObstacles=[];
-        rSpeed=5;        // Starting Speed
-        rSpawnTimer=0;   // Timer for obstacle spawning
+        rDino={ x:50, y:200, vy:0, w:40, h:40, grounding:true };
+        rObstacles=[]; rDust=[];
+        rSpeed=5; rSpawnTimer=0; rDustTimer=0;
         runLoop();
     }
-
-    function runnerJump(){ 
-        if(rDino.grounding && isPlay){ 
-            rDino.vy = -13; // Jump Power (Negative goes up)
-            rDino.grounding = false; 
-            Audio.play(300); 
-        } 
-    }
+    function runnerJump(){ if(rDino.grounding && isPlay){ rDino.vy = -13; rDino.grounding = false; Audio.play(300); } }
     
     function runLoop(){
         if(!isPlay) return;
         rCtx.clearRect(0,0,600,250);
         
-        // 1. Draw Ground Line
-        rCtx.beginPath();
-        rCtx.moveTo(0, 235);
-        rCtx.lineTo(600, 235);
-        rCtx.strokeStyle = 'rgba(255,255,255,0.2)';
-        rCtx.lineWidth = 2;
-        rCtx.stroke();
+        // Ground
+        rCtx.beginPath(); rCtx.moveTo(0, 235); rCtx.lineTo(600, 235);
+        rCtx.strokeStyle = getComputedStyle(root).getPropertyValue('--primary');
+        rCtx.lineWidth = 2; rCtx.stroke();
 
-        // 2. Physics (Gravity)
-        rDino.vy += 0.8; // Gravity pulls down
-        rDino.y += rDino.vy; 
-
-        // Floor Collision
-        if(rDino.y > 200){
-            rDino.y = 200;
-            rDino.vy = 0;
-            rDino.grounding = true;
-        }
+        // Physics
+        rDino.vy += 0.8; rDino.y += rDino.vy; 
+        if(rDino.y > 200){ rDino.y = 200; rDino.vy = 0; rDino.grounding = true; }
         
-        // 3. Spawning Logic (Timer Based for consistent gaps)
+        // Spawning
         rSpawnTimer--;
         if(rSpawnTimer <= 0) {
             rObstacles.push({x:600, y:205, w:30, h:40});
-            // Randomize next spawn time based on speed to ensure jumpable gaps
-            // Faster speed = slightly faster spawns, but kept proportional
-            let minGap = 70; 
-            let maxGap = 140; 
+            let minGap = 70; let maxGap = 140; 
             rSpawnTimer = Math.floor(Math.random() * (maxGap - minGap) + minGap); 
         }
-        
-        // 4. Draw Dino
-        rCtx.font = "40px Arial";
-        rCtx.textAlign = "left";
-        rCtx.fillText('🚀', rDino.x, rDino.y + 35); // +35 to align text baseline with hitbox
-        
-        // 5. Obstacles & Collision
-        for(let i=rObstacles.length-1; i>=0; i--) {
-            let o = rObstacles[i];
-            o.x -= rSpeed;
-            rCtx.fillText('🌵', o.x, o.y + 30);
-            
-            // Collision Detection (AABB with padding for "forgiveness")
-            // We shrink the hitbox by 10px on all sides to avoid "cheap" deaths
-            if(
-                rDino.x < o.x + o.w - 10 &&
-                rDino.x + rDino.w - 10 > o.x + 10 &&
-                rDino.y < o.y + o.h - 10 &&
-                rDino.y + rDino.h - 10 > o.y + 10
-            ) {
-                gameOver("Crashed");
-                return;
-            }
 
-            // Cleanup off-screen
+        // Dust Spawning (Inside Canvas)
+        rDustTimer--;
+        if(rDustTimer <= 0) {
+            // Spawn dust at random height
+            if(Math.random() < 0.3) {
+                rDust.push({x:600, y: 150 - Math.random()*50, w:30, h:30});
+            }
+            rDustTimer = 200; // Check every 200 frames approx
+        }
+        
+        // Draw Dino (Skin Aware)
+        rCtx.font = "40px Arial"; rCtx.textAlign = "left";
+        let dinoEmoji = '🚀';
+        if(currentSkin === 'gold') dinoEmoji = '🛸';
+        if(currentSkin === 'neon') dinoEmoji = '👾';
+        rCtx.fillText(dinoEmoji, rDino.x, rDino.y + 35);
+        
+        // Obstacles
+        for(let i=rObstacles.length-1; i>=0; i--) {
+            let o = rObstacles[i]; o.x -= rSpeed;
+            rCtx.fillText('🌵', o.x, o.y + 30);
+            if( rDino.x < o.x + o.w - 10 && rDino.x + rDino.w - 10 > o.x + 10 && rDino.y < o.y + o.h - 10 && rDino.y + rDino.h - 10 > o.y + 10 ) { gameOver("Crashed"); return; }
             if(o.x < -50) rObstacles.splice(i,1);
         }
 
-        // 6. Difficulty Scaling
-        updateScore(0.05); 
-        // Cap speed at 12 to keep it playable
-        rSpeed = Math.min(12, 5 + (score/200)); 
+        // Dust
+        for(let i=rDust.length-1; i>=0; i--) {
+            let d = rDust[i]; d.x -= rSpeed;
+            rCtx.fillText('✨', d.x, d.y + 30);
+            // Collision
+            if( rDino.x < d.x + d.w && rDino.x + rDino.w > d.x && rDino.y < d.y + d.h && rDino.y + rDino.h > d.y ) {
+                collectDust();
+                rDust.splice(i,1);
+            } else if(d.x < -50) rDust.splice(i,1);
+        }
 
+        updateScore(0.05); 
+        rSpeed = Math.min(12, 5 + (score/200)); 
         rFrame=requestAnimationFrame(runLoop);
     }
 
-    // Init Logic
     window.onload = init;
 </script>
 </body>  
