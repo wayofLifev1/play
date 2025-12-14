@@ -11,6 +11,7 @@
             --bg-dark: #05050a;  
             --cyan: #00f2ea;  
             --purple: #bf00ff;  
+            --gold: #FFD700;
             --font-head: 'Orbitron', sans-serif;  
             --font-body: 'Poppins', sans-serif;  
         }  
@@ -25,12 +26,53 @@
         @keyframes float { 0% {transform:translateY(0px);} 50% {transform:translateY(-10px);} 100% {transform:translateY(0px);} }  
         .float-anim { animation: float 3s ease-in-out infinite; }  
 
+        /* --- ALIVE HEADER ANIMATION --- */
+        @keyframes alive-pulse {
+            0% { text-shadow: 0 0 10px rgba(191, 0, 255, 0.5); transform: scale(1); letter-spacing: 0px; }
+            50% { text-shadow: 0 0 25px var(--cyan), 0 0 40px var(--purple); transform: scale(1.02); letter-spacing: 2px; }
+            52% { text-shadow: -2px 0 var(--cyan), 2px 0 var(--purple); transform: translateX(-2px); }
+            54% { transform: translateX(2px); }
+            100% { text-shadow: 0 0 10px rgba(191, 0, 255, 0.5); transform: scale(1); letter-spacing: 0px; }
+        }
+
         /* Layout */
         #app { width: 100vw; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }  
-        h1 { font-family: var(--font-head); font-size: 2.8rem; margin: 10px 0; background: linear-gradient(to right, var(--cyan), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0px 0px 30px rgba(191, 0, 255, 0.5); text-align: center; }  
+        
+        /* Header Area with Egg */
+        .header-area { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 10px 0; position: relative; }
+        
+        h1 { 
+            font-family: var(--font-head); 
+            font-size: 2.5rem; 
+            margin: 0; 
+            background: linear-gradient(to right, var(--cyan), var(--purple)); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            text-align: center; 
+            animation: alive-pulse 4s infinite; /* Make it ALIVE */
+            cursor: default;
+            user-select: none;
+        }  
+
+        /* EGG UI STYLES */
+        .egg-slot {
+            width: 50px; height: 60px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+        .egg-icon { font-size: 2.5rem; filter: drop-shadow(0 0 10px var(--purple)); transition: transform 0.3s; }
+        .egg-slot:hover .egg-icon { transform: scale(1.1) rotate(5deg); }
+        .egg-status-dot {
+            position: absolute; top: 0; right: 0; width: 12px; height: 12px; border-radius: 50%;
+            background: #333; border: 2px solid #000;
+        }
+        .status-incubating { background: var(--purple); box-shadow: 0 0 10px var(--purple); animation: blink 2s infinite; }
+        .status-ready { background: var(--gold); box-shadow: 0 0 15px var(--gold); animation: fast-pulse 0.5s infinite; }
+        @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+        @keyframes fast-pulse { 0%{transform:scale(1);} 50%{transform:scale(1.3);} 100%{transform:scale(1);} }
 
         /* Menu Grid */
-        /* MERGE NOTE: Padding increased to 120px to accommodate Chill Button */
         .menu-scroll { width: 100%; flex: 1; overflow-y: auto; display: flex; flex-direction: column; align-items: center; padding-bottom: 120px; }  
         .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 15px; width: 100%; max-width: 500px; padding: 10px; box-sizing: border-box; }  
         .game-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 16px; text-align: center; cursor: pointer; transition: 0.2s; backdrop-filter: blur(5px); box-shadow: 0 4px 15px rgba(0,0,0,0.4); }  
@@ -39,58 +81,43 @@
         .hs-label { font-size: 0.6rem; color: #aaa; margin-top: 8px; display: block; font-weight: bold; }  
         .hs-val { color: #fff; font-size: 1.1rem; font-weight: bold; font-family: var(--font-head); text-shadow: 0 0 10px rgba(255,255,255,0.3); }  
 
-        /* --- STICKY FOOTER & FLOATING CHILL BUTTON --- */
-        .sticky-footer {
-            position: absolute;
-            bottom: 30px;
-            left: 0; 
-            width: 100%;
-            pointer-events: none; /* Let clicks pass through empty space */
-            z-index: 50;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+        /* MENU CARD SKIN INDICATORS (Visual feedback in menu) */
+        .skin-active-gold { border: 2px solid var(--gold) !important; box-shadow: 0 0 20px rgba(255, 215, 0, 0.4) !important; }
+        .skin-active-neon { border: 2px solid #00f2ea !important; box-shadow: 0 0 20px rgba(0, 242, 234, 0.4) !important; }
 
-        @keyframes zero-g {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            25% { transform: translate(8px, -12px) rotate(3deg); }
-            50% { transform: translate(0, -20px) rotate(0deg); }
-            75% { transform: translate(-8px, -12px) rotate(-3deg); }
-            100% { transform: translate(0, 0) rotate(0deg); }
-        }
+        /* Footer */
+        .sticky-footer { position: absolute; bottom: 30px; left: 0; width: 100%; pointer-events: none; z-index: 50; display: flex; justify-content: center; align-items: center; }
+        @keyframes zero-g { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(8px, -12px) rotate(3deg); } 50% { transform: translate(0, -20px) rotate(0deg); } 75% { transform: translate(-8px, -12px) rotate(-3deg); } 100% { transform: translate(0, 0) rotate(0deg); } }
+        .chill-btn { pointer-events: auto; width: 75px; height: 75px; border-radius: 50%; background: rgba(10, 10, 20, 0.85); border: 2px solid var(--cyan); box-shadow: 0 0 30px rgba(0, 242, 234, 0.3), inset 0 0 15px rgba(0, 242, 234, 0.2); color: var(--cyan); font-family: var(--font-head); font-size: 0.75rem; font-weight: 900; text-align: center; line-height: 1.2; letter-spacing: 1px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(8px); transition: all 0.3s ease; animation: zero-g 6s ease-in-out infinite; }
+        .chill-btn:active { transform: scale(0.9) !important; }
 
-        .chill-btn {
-            pointer-events: auto;
-            width: 75px;
-            height: 75px;
-            border-radius: 50%;
-            background: rgba(10, 10, 20, 0.85);
-            border: 2px solid var(--cyan);
-            box-shadow: 0 0 30px rgba(0, 242, 234, 0.3), inset 0 0 15px rgba(0, 242, 234, 0.2);
-            color: var(--cyan);
-            font-family: var(--font-head);
-            font-size: 0.75rem;
-            font-weight: 900;
-            text-align: center;
-            line-height: 1.2;
-            letter-spacing: 1px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            backdrop-filter: blur(8px);
-            transition: all 0.3s ease;
-            animation: zero-g 6s ease-in-out infinite;
-        }
-
-        .chill-btn:active { transform: scale(0.9) !important; box-shadow: 0 0 50px rgba(0, 242, 234, 0.8); background: rgba(0, 242, 234, 0.1); }
-        .chill-btn:hover { box-shadow: 0 0 40px rgba(0, 242, 234, 0.5); text-shadow: 0 0 10px var(--cyan); }
-
-        /* Game Container (Iframe) */
+        /* Game Container */
         #game-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #05050a; z-index: 100; display: none; }
         iframe { width: 100%; height: 100%; border: none; }
+
+        /* MODAL FOR EGG */
+        #egg-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            z-index: 200; display: none; align-items: center; justify-content: center;
+            flex-direction: column;
+        }
+        .modal-content {
+            background: #111; border: 2px solid var(--purple);
+            padding: 30px; border-radius: 20px; text-align: center;
+            box-shadow: 0 0 50px rgba(191,0,255,0.3); max-width: 80%;
+            animation: float 4s ease-in-out infinite;
+        }
+        .big-egg { font-size: 5rem; margin-bottom: 20px; display: inline-block; }
+        .timer-text { font-family: var(--font-head); font-size: 1.5rem; color: var(--cyan); margin: 10px 0; }
+        .hatch-btn {
+            background: linear-gradient(45deg, var(--gold), #ff8c00);
+            border: none; padding: 15px 30px; color: #000; font-weight: 900;
+            font-family: var(--font-head); font-size: 1.2rem; border-radius: 30px;
+            cursor: pointer; box-shadow: 0 0 20px var(--gold);
+            margin-top: 15px; animation: pulse 1s infinite;
+        }
+        @keyframes pulse { 0%{transform:scale(1);} 50%{transform:scale(1.05);} 100%{transform:scale(1);} }
     </style>
 </head>  
 <body>  
@@ -115,39 +142,44 @@
             </div>
     </div>
 
-    <div style="padding: 10px 0;">  
+    <div class="header-area">
         <h1>BRAIN<br>ARCADE</h1>  
-        <p style="text-align:center; opacity: 0.6; font-size: 0.9rem; margin: 0; letter-spacing: 3px; color:var(--cyan);">PLATFORM HUB</p>  
-    </div>  
+        <div class="egg-slot" onclick="openEggUI()">
+            <div class="egg-icon" id="main-egg-icon">🥚</div>
+            <div id="egg-status" class="egg-status-dot"></div>
+        </div>
+    </div>
+    <p style="text-align:center; opacity: 0.6; font-size: 0.9rem; margin: 0; letter-spacing: 3px; color:var(--cyan); margin-bottom: 10px;">PLATFORM HUB</p>  
 
     <div class="menu-scroll">  
         <div class="menu-grid">  
-            <div class="game-card float-anim" onclick="launchGame('cosmic.html')" style="border-top: 3px solid #ff00ff; box-shadow: 0 0 20px rgba(255,0,255,0.3); grid-column: span 2;">  
+            <div id="card-cosmic" class="game-card float-anim" onclick="launchGame('cosmic.html', 'cosmic')" style="border-top: 3px solid #ff00ff; box-shadow: 0 0 20px rgba(255,0,255,0.3); grid-column: span 2;">  
                 <h3 style="color:#ff00ff; font-size: 1.2rem;">COSMIC GLIDE 3D</h3>  
                 <span class="hs-label">HIGH SCORE</span><span id="hs-glider" class="hs-val">0</span>  
             </div>  
-            <div class="game-card float-anim" onclick="launchGame('arcade.html?game=memory')" style="border-top: 3px solid #4facfe; animation-delay: 0.1s;">  
+            
+            <div id="card-memory" class="game-card float-anim" onclick="launchGame('arcade.html?game=memory', 'arcade')" style="border-top: 3px solid #4facfe; animation-delay: 0.1s;">  
                 <h3>MEMORY MATRIX</h3> <span class="hs-label">BEST</span><span id="hs-memory" class="hs-val">0</span>  
             </div>  
-            <div class="game-card float-anim" onclick="launchGame('arcade.html?game=math')" style="border-top: 3px solid #bf00ff; animation-delay: 0.2s;">  
+            <div id="card-math" class="game-card float-anim" onclick="launchGame('arcade.html?game=math', 'arcade')" style="border-top: 3px solid #bf00ff; animation-delay: 0.2s;">  
                 <h3>QUICK MATH</h3> <span class="hs-label">BEST</span><span id="hs-math" class="hs-val">0</span>  
             </div>  
-            <div class="game-card float-anim" onclick="launchGame('arcade.html?game=color')" style="border-top: 3px solid #f1c40f; animation-delay: 0.3s;">  
+            <div id="card-color" class="game-card float-anim" onclick="launchGame('arcade.html?game=color', 'arcade')" style="border-top: 3px solid #f1c40f; animation-delay: 0.3s;">  
                 <h3>COLOR TRAP</h3> <span class="hs-label">BEST</span><span id="hs-color" class="hs-val">0</span>  
             </div>  
-            <div class="game-card float-anim" onclick="launchGame('arcade.html?game=odd')" style="border-top: 3px solid #fff; animation-delay: 0.4s;">  
+            <div id="card-odd" class="game-card float-anim" onclick="launchGame('arcade.html?game=odd', 'arcade')" style="border-top: 3px solid #fff; animation-delay: 0.4s;">  
                 <h3>ODD ONE OUT</h3> <span class="hs-label">BEST</span><span id="hs-odd" class="hs-val">0</span>  
             </div>  
-            <div class="game-card float-anim" onclick="launchGame('arcade.html?game=order')" style="border-top: 3px solid #4facfe; animation-delay: 0.5s;">  
+            <div id="card-order" class="game-card float-anim" onclick="launchGame('arcade.html?game=order', 'arcade')" style="border-top: 3px solid #4facfe; animation-delay: 0.5s;">  
                 <h3>ORDER CHAOS</h3> <span class="hs-label">BEST</span><span id="hs-order" class="hs-val">0</span>  
             </div>  
-            <div class="game-card float-anim" onclick="launchGame('arcade.html?game=dash')" style="border-top: 3px solid #00e676; animation-delay: 0.6s;">  
+            <div id="card-dash" class="game-card float-anim" onclick="launchGame('arcade.html?game=dash', 'arcade')" style="border-top: 3px solid #00e676; animation-delay: 0.6s;">  
                 <h3>DIRECTION DASH</h3> <span class="hs-label">BEST</span><span id="hs-dash" class="hs-val">0</span>  
             </div>  
-            <div class="game-card float-anim" onclick="launchGame('arcade.html?game=reflex')" style="border-top: 3px solid #ff0080; animation-delay: 0.7s;">  
+            <div id="card-reflex" class="game-card float-anim" onclick="launchGame('arcade.html?game=reflex', 'arcade')" style="border-top: 3px solid #ff0080; animation-delay: 0.7s;">  
                 <h3>RAPID REFLEX</h3> <span class="hs-label">BEST</span><span id="hs-reflex" class="hs-val">0</span>  
             </div>  
-            <div class="game-card float-anim" onclick="launchGame('arcade.html?game=runner')" style="border-top: 3px solid #bf00ff; animation-delay: 0.8s;">  
+            <div id="card-runner" class="game-card float-anim" onclick="launchGame('arcade.html?game=runner', 'arcade')" style="border-top: 3px solid #bf00ff; animation-delay: 0.8s;">  
                 <h3>ROCKET RUN</h3> <span class="hs-label">BEST</span><span id="hs-runner" class="hs-val">0</span>  
             </div>  
         </div>  
@@ -159,13 +191,43 @@
         </div>
     </div>
 
+    <div id="egg-modal" onclick="closeEggUI(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h2 style="font-family:var(--font-head); color:var(--purple); margin-top:0;">MYSTERY EGG</h2>
+            <div class="big-egg" id="modal-egg-visual">🥚</div>
+            
+            <div id="view-empty" style="display:none;">
+                <p>No egg found yet.</p>
+                <p style="font-size:0.8rem; color:#aaa;">Play Cosmic or Arcade.<br>Find Stardust.<br>Wait for the drop.</p>
+            </div>
+
+            <div id="view-incubating" style="display:none;">
+                <p>INCUBATING...</p>
+                <div class="timer-text" id="egg-timer">00:00:00</div>
+                <p style="font-size:0.8rem; color:#aaa;">Patience is key.</p>
+            </div>
+
+            <div id="view-ready" style="display:none;">
+                <p style="color:var(--gold);">READY TO HATCH!</p>
+                <button class="hatch-btn" onclick="hatchEgg()">HATCH NOW</button>
+            </div>
+            
+             <div id="view-reward" style="display:none;">
+                <p style="color:var(--gold); font-size:1.5rem;">SKIN UNLOCKED!</p>
+                <p id="reward-game-name" style="font-size:0.8rem; color:#fff; margin:0;">GAME</p>
+                <p id="reward-skin-name" style="font-family:var(--font-head); color:var(--cyan); font-size: 1.2rem; margin-top:5px;">SKIN NAME</p>
+                <button class="hatch-btn" style="background:#333; color:#fff; font-size:1rem;" onclick="closeEggUI(null)">EQUIP NOW</button>
+            </div>
+        </div>
+    </div>
+
     <div id="game-layer">
         <iframe id="game-frame" src=""></iframe>
     </div>
 </div>  
 
 <script>
-    // --- 1. INTERNAL CHILL GAME SOURCE (Embedded) ---
+    // --- 1. INTERNAL CHILL GAME SOURCE (Clean - No Stardust) ---
     const chillGameCode = `
     <!DOCTYPE html>
     <html lang="en">
@@ -317,20 +379,202 @@
       navigator.serviceWorker.register('sw.js').catch(() => console.log('SW Skip'));
     }
 
-    const scores = { memory:0, math:0, color:0, odd:0, order:0, dash:0, reflex:0, runner:0, glider:0 };  
+    // --- DATA & SKIN SYSTEM ---
+    const appData = { 
+        scores: { memory:0, math:0, color:0, odd:0, order:0, dash:0, reflex:0, runner:0, glider:0 },
+        egg: {
+            active: false,
+            hatchTime: 0,
+            ready: false
+        },
+        unlockedSkins: [], // Format: 'gameCategory_skinID' e.g., 'cosmic_neon'
+        activeSkins: { cosmic: 'default', arcade: 'default' } 
+    };  
     
-    function loadScores() {  
+    // DEFINING THE REWARDS
+    // When you upload cosmic.html and arcade.html, you will code these looks.
+    const rewardPool = [
+        { id: 'cosmic_gold', game: 'cosmic', name: 'Golden Starship', skinId: 'gold' },
+        { id: 'cosmic_neon', game: 'cosmic', name: 'Neon Glitch', skinId: 'neon' },
+        { id: 'arcade_gold', game: 'arcade', name: 'Midas Touch UI', skinId: 'gold' },
+        { id: 'arcade_neon', game: 'arcade', name: 'Cyberpunk UI', skinId: 'neon' }
+    ];
+
+    function saveData() {
+        localStorage.setItem('brainArcadeV6_Data', JSON.stringify(appData));
+    }
+
+    function loadData() {  
         try {  
-            let s = localStorage.getItem('brainArcadeV6');  
-            if(s) Object.assign(scores, JSON.parse(s));  
+            let s = localStorage.getItem('brainArcadeV6_Data');  
+            if(s) Object.assign(appData, JSON.parse(s));  
         } catch(e) {}  
-        for(let k in scores) { let e=document.getElementById(`hs-${k}`); if(e) e.innerText=scores[k]; }  
+        
+        for(let k in appData.scores) { 
+            let e=document.getElementById(`hs-${k}`); 
+            if(e) e.innerText=appData.scores[k]; 
+        }  
+        updateEggUI();
+        updateMenuVisuals();
     }  
 
-    function launchGame(url) {
+    // --- EGG SYSTEM ---
+    function updateEggUI() {
+        const statusDot = document.getElementById('egg-status');
+        const now = Date.now();
+        if (!appData.egg.active) {
+            statusDot.className = 'egg-status-dot'; statusDot.style.background = '#333';
+        } else if (now >= appData.egg.hatchTime) {
+            statusDot.className = 'egg-status-dot status-ready'; appData.egg.ready = true;
+        } else {
+            statusDot.className = 'egg-status-dot status-incubating'; appData.egg.ready = false;
+        }
+    }
+
+    // Triggered by postMessage from cosmic.html or arcade.html
+    function collectStardust() {
+        if (appData.egg.active) return; 
+        appData.egg.active = true;
+        // 24 Hour Timer (For testing, you can reduce this)
+        // appData.egg.hatchTime = Date.now() + (24 * 60 * 60 * 1000); 
+        appData.egg.hatchTime = Date.now() + (10 * 1000); // 10 seconds for testing
+        
+        appData.egg.ready = false;
+        saveData();
+        updateEggUI();
+        
+        // Notification
+        const notif = document.createElement('div');
+        notif.innerText = "✨ STARDUST FOUND! EGG INCUBATING...";
+        notif.style.cssText = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.9); border:1px solid #bf00ff; color:#fff; padding:15px; z-index:9999; border-radius:10px; font-family:var(--font-head); animation:float 1s ease-out;";
+        document.body.appendChild(notif);
+        setTimeout(() => notif.remove(), 3000);
+    }
+
+    let eggTimerInterval;
+
+    function openEggUI() {
+        const modal = document.getElementById('egg-modal');
+        const now = Date.now();
+        
+        document.getElementById('view-empty').style.display = 'none';
+        document.getElementById('view-incubating').style.display = 'none';
+        document.getElementById('view-ready').style.display = 'none';
+        document.getElementById('view-reward').style.display = 'none';
+        document.getElementById('modal-egg-visual').style.transform = 'scale(1)';
+        document.getElementById('modal-egg-visual').innerText = '🥚';
+
+        modal.style.display = 'flex';
+
+        if (!appData.egg.active) {
+            document.getElementById('view-empty').style.display = 'block';
+        } else if (now < appData.egg.hatchTime) {
+            document.getElementById('view-incubating').style.display = 'block';
+            startTimer();
+        } else {
+            document.getElementById('view-ready').style.display = 'block';
+        }
+    }
+
+    function startTimer() {
+        const timerEl = document.getElementById('egg-timer');
+        clearInterval(eggTimerInterval);
+        eggTimerInterval = setInterval(() => {
+            const diff = appData.egg.hatchTime - Date.now();
+            if (diff <= 0) {
+                clearInterval(eggTimerInterval);
+                openEggUI(); 
+                updateEggUI();
+                return;
+            }
+            const h = Math.floor(diff / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((diff % (1000 * 60)) / 1000);
+            timerEl.innerText = `${h}h ${m}m ${s}s`;
+        }, 1000);
+    }
+
+    function hatchEgg() {
+        // 1. Filter out skins we already have
+        const unowned = rewardPool.filter(r => !appData.unlockedSkins.includes(r.id));
+        
+        let reward;
+        if(unowned.length === 0) {
+            // Fallback if they have everything
+            reward = rewardPool[Math.floor(Math.random() * rewardPool.length)];
+        } else {
+            // Pick random new skin
+            reward = unowned[Math.floor(Math.random() * unowned.length)];
+            appData.unlockedSkins.push(reward.id);
+        }
+
+        // Auto-Equip this skin for that game category
+        appData.activeSkins[reward.game] = reward.skinId;
+
+        // Reset Egg
+        appData.egg.active = false;
+        appData.egg.ready = false;
+        saveData();
+        updateEggUI();
+        updateMenuVisuals();
+
+        // Visual Animation
+        const eggVis = document.getElementById('modal-egg-visual');
+        eggVis.style.transition = '0.5s';
+        eggVis.style.transform = 'scale(1.5) rotate(10deg)';
+        setTimeout(() => {
+            eggVis.innerText = '💥';
+            setTimeout(() => {
+                eggVis.innerText = '🎁';
+                document.getElementById('view-ready').style.display = 'none';
+                document.getElementById('view-reward').style.display = 'block';
+                
+                document.getElementById('reward-game-name').innerText = (reward.game === 'cosmic' ? 'COSMIC GLIDE' : 'ARCADE SUITE');
+                document.getElementById('reward-skin-name').innerText = reward.name;
+            }, 300);
+        }, 300);
+    }
+
+    function updateMenuVisuals() {
+        // Update the menu cards to reflect the ACTIVE skin for that category
+        // Cosmic
+        const cosmicCard = document.getElementById('card-cosmic');
+        cosmicCard.classList.remove('skin-active-gold', 'skin-active-neon');
+        if(appData.activeSkins.cosmic === 'gold') cosmicCard.classList.add('skin-active-gold');
+        if(appData.activeSkins.cosmic === 'neon') cosmicCard.classList.add('skin-active-neon');
+
+        // Arcade (Apply to all arcade cards for visual consistency)
+        const arcadeCards = ['card-memory', 'card-math', 'card-color', 'card-odd', 'card-order', 'card-dash', 'card-reflex', 'card-runner'];
+        arcadeCards.forEach(id => {
+            const el = document.getElementById(id);
+            if(el) {
+                el.classList.remove('skin-active-gold', 'skin-active-neon');
+                if(appData.activeSkins.arcade === 'gold') el.classList.add('skin-active-gold');
+                if(appData.activeSkins.arcade === 'neon') el.classList.add('skin-active-neon');
+            }
+        });
+    }
+
+    function closeEggUI(e) {
+        if(e && e.target.id !== 'egg-modal') return; 
+        document.getElementById('egg-modal').style.display = 'none';
+        clearInterval(eggTimerInterval);
+    }
+
+    // --- GAME LAUNCHER (UPDATED) ---
+    function launchGame(url, category) {
         const layer = document.getElementById('game-layer');
         const frame = document.getElementById('game-frame');
-        frame.src = url;
+        
+        // Append the active skin to the URL so the game can read it!
+        // Example result: "cosmic.html?skin=gold"
+        let skinParam = '';
+        if (category && appData.activeSkins[category] !== 'default') {
+            const separator = url.includes('?') ? '&' : '?';
+            skinParam = `${separator}skin=${appData.activeSkins[category]}`;
+        }
+
+        frame.src = url + skinParam;
         layer.style.display = 'block';
     }
 
@@ -338,13 +582,17 @@
         if(event.data === 'close_game') {
             document.getElementById('game-layer').style.display = 'none';
             document.getElementById('game-frame').src = '';
-            setTimeout(loadScores, 50); 
+            setTimeout(loadData, 50); 
+        }
+        // STARDUST LISTENER - Waits for cosmic.html or arcade.html to say "stardust_collected"
+        if(event.data && event.data.type === 'stardust_collected') {
+            collectStardust();
         }
     });
 
-    loadScores();
+    loadData();
     
-    // --- UNIVERSAL INSTALL LOGIC ---
+    // --- INSTALL LOGIC ---
     const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream;
     const isInstalled = window.matchMedia('(display-mode: standalone)').matches;
     let deferredPrompt;
@@ -365,18 +613,6 @@
                 installBtn.style.display = 'none';
             }
         });
-    }
-
-    if (isIOS && !isInstalled) {
-        const iosMsg = document.createElement('div');
-        iosMsg.style.cssText = "position:fixed; bottom:20px; left:50%; transform:translateX(-50%); width:90%; background:rgba(0,0,0,0.9); color:#fff; padding:15px; border-radius:15px; border:1px solid #bf00ff; text-align:center; font-size:0.9rem; z-index:9999; box-shadow:0 0 20px rgba(191,0,255,0.4);";
-        iosMsg.innerHTML = "To install on iOS:<br>Tap <span style='font-size:1.3rem'>⎋</span> Share &rarr; <b>Add to Home Screen</b>";
-        const close = document.createElement('div');
-        close.innerText = "OK";
-        close.style.cssText = "margin-top:10px; color:#00f2ea; font-weight:bold; cursor:pointer; padding:5px;";
-        close.onclick = () => iosMsg.remove();
-        iosMsg.appendChild(close);
-        document.body.appendChild(iosMsg);
     }
 </script>
 
