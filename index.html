@@ -622,13 +622,39 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 <script>
-    // FIREBASE ANALYTICS (Kept same as before)
+    // FIREBASE ANALYTICS & PRESENCE SYSTEM
     const firebaseConfig = { apiKey: "AIzaSyCYPD6eFQvtwi6CMBkAbQ1SmkWA2qtby9s", authDomain: "wofplay-123.firebaseapp.com", databaseURL: "https://wofplay-123-default-rtdb.firebaseio.com", projectId: "wofplay-123", storageBucket: "wofplay-123.firebasestorage.app", messagingSenderId: "716443688368", appId: "1:716443688368:web:6ebd08d8d3a49f1c494a75" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    
+    // User ID generation
     let uid = localStorage.getItem('ba_uid');
     if (!uid) { uid = 'user_' + Math.floor(Math.random() * 100000); localStorage.setItem('ba_uid', uid); db.ref('stats/installs').transaction(c => (c || 0) + 1); }
+    
+    // Track Visits
     db.ref('stats/visits').transaction(current => (current || 0) + 1);
+
+    // --- ONLINE PRESENCE SYSTEM (NEW) ---
+    // This tells Firebase "I am here" and auto-removes the entry when "I leave"
+    const connectedRef = db.ref(".info/connected");
+    const userStatusDatabaseRef = db.ref("status/" + uid);
+
+    connectedRef.on("value", (snap) => {
+        if (snap.val() === true) {
+            // If we lose connection, remove this user from the list
+            userStatusDatabaseRef.onDisconnect().remove().then(() => {
+                // Determine device type roughly
+                const deviceType = /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop';
+                
+                // Add user to the online list
+                userStatusDatabaseRef.set({
+                    state: 'online',
+                    last_changed: firebase.database.ServerValue.TIMESTAMP,
+                    device: deviceType
+                });
+            });
+        }
+    });
 </script> 
 </body>  
 </html>
