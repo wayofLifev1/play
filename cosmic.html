@@ -3,213 +3,304 @@
 <head>  
     <meta charset="UTF-8">  
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">  
-    <title>Cosmic Glide 3D</title>  
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@400;600&display=swap" rel="stylesheet">  
+    <title>Cosmic Glide Remastered</title>  
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">  
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>  
     <style>  
-        body { margin: 0; overflow: hidden; background: #05050a; font-family: 'Orbitron', sans-serif; color: white; touch-action: none; user-select: none; }
-        #game-glider { width: 100vw; height: 100vh; position: relative; }
-        
-        /* HUD */
-        #glider-hud-layer { position: absolute; top: 0; left: 0; width: 100%; padding: 20px; box-sizing: border-box; pointer-events: none; z-index: 10; display:flex; justify-content:space-between; }
-        .score-box { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); font-size: 1.2rem; }
-        .dust-session { color: #FFD700; font-size: 1.2rem; text-shadow: 0 0 10px #FFD700; }
-
-        /* Overlays */
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,5,10,0.9); z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 15px 40px; border-radius: 30px; font-family: 'Orbitron'; font-size: 1.2rem; margin-top: 20px; cursor: pointer; transition:0.2s; }
-        .btn:active { transform:scale(0.95); background: rgba(255,255,255,0.3); }
-        
-        .exit-btn { pointer-events: auto; background: rgba(255,0,0,0.2); border: 1px solid red; padding: 5px 15px; border-radius: 10px; color: white; cursor: pointer; font-size: 0.8rem; }
-
-        /* NOTIFICATIONS */
-        #msg-area { position: absolute; top: 20%; width: 100%; text-align: center; pointer-events: none; z-index: 15; }
-        .game-msg { font-size: 1.5rem; font-weight: bold; text-shadow: 0 0 20px currentColor; animation: popUp 1.5s forwards; }
-        @keyframes popUp { 0%{transform:scale(0); opacity:0;} 20%{transform:scale(1.2); opacity:1;} 80%{opacity:1;} 100%{transform:translateY(-50px); opacity:0;} }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Orbitron', sans-serif; user-select: none; }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        .hud-top { display: flex; justify-content: space-between; padding: 20px; color: #fff; text-shadow: 0 0 10px rgba(0,242,234,0.5); font-size: 1.2rem; }
+        .btn { pointer-events: auto; background: rgba(255,255,255,0.1); border: 1px solid #00f2ea; color: #fff; padding: 10px 30px; border-radius: 20px; font-family: inherit; font-weight: bold; cursor: pointer; backdrop-filter: blur(5px); }
+        #start-screen, #game-over { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; z-index: 20; backdrop-filter: blur(8px); }
+        h1 { font-size: 3rem; margin: 0 0 10px 0; background: linear-gradient(to right, #00f2ea, #bf00ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .msg-pop { position: absolute; top: 25%; width: 100%; text-align: center; color: #FFD700; font-size: 2rem; font-weight: 900; animation: fadeUp 1s forwards; text-shadow: 0 0 20px #FFD700; }
+        @keyframes fadeUp { 0%{opacity:0; transform:translateY(20px) scale(0.5);} 20%{opacity:1; transform:translateY(0) scale(1.2);} 100%{opacity:0; transform:translateY(-50px) scale(1);} }
     </style>
 </head>  
 <body>  
 
-<div id="game-glider">  
-    <div id="glider-hud-layer">  
-        <div class="score-box">SCORE: <span id="score-val">0</span></div> 
-        <div class="dust-session">✨ <span id="dust-val">0</span></div>
-        <button class="exit-btn" onclick="exitGame()">EXIT</button> 
-    </div>  
-    <div id="msg-area"></div>
-    <div style="position: absolute; bottom: 30px; width: 100%; text-align: center; color: rgba(255,255,255,0.5); pointer-events: none; z-index:5;">DRAG TO FLY</div>
-</div>  
-
-<div id="start-overlay" class="overlay">
-    <h1 id="game-title" style="color:#ff00ff; text-shadow:0 0 20px #ff00ff; font-size:2.5rem; text-align: center;">COSMIC GLIDE</h1>
-    <p id="skin-label" style="color:#aaa; font-size:0.9rem; margin-top:-10px;">DEFAULT SYSTEM</p>
-    <button class="btn" onclick="initGlider()">START FLIGHT</button>
+<div id="ui-layer">
+    <div class="hud-top">
+        <div>SCORE: <span id="score-disp">0</span></div>
+        <div>✨ <span id="dust-disp">0</span></div>
+    </div>
+    <div id="msg-layer"></div>
 </div>
 
-<div id="game-over" class="overlay" style="display:none;">
-    <h2 style="color:#ff4757; font-size:3rem;">CRASHED</h2>
-    <div id="score-final" style="font-size: 4rem; color: #fff;">0</div>
-    <div style="color:#FFD700; margin-top:10px;">COLLECTED: <span id="final-dust">0</span> ✨</div>
-    <button class="btn" onclick="location.reload()">RETRY</button>
-    <button class="btn" style="background:transparent; border:none;" onclick="exitGame()">EXIT</button>
+<div id="start-screen">
+    <h1>COSMIC GLIDE</h1>
+    <p style="color:#aaa; letter-spacing:2px; margin-bottom:30px;">AVOID RED • CATCH GOLD</p>
+    <button class="btn" onclick="startGame()">INITIATE LAUNCH</button>
+    <button class="btn" style="margin-top:10px; border-color:#ff4757;" onclick="window.parent.postMessage('close_game','*')">EXIT SYSTEM</button>
+</div>
+
+<div id="game-over" style="display:none;">
+    <h1 style="color:#ff4757; -webkit-text-fill-color: #ff4757;">CRITICAL FAILURE</h1>
+    <div style="font-size:1.5rem; color:#fff; margin-bottom:20px;">SCORE: <span id="final-score">0</span></div>
+    <button class="btn" onclick="resetGame()">REBOOT SYSTEM</button>
+    <button class="btn" style="margin-top:10px; border:none;" onclick="window.parent.postMessage('close_game','*')">EJECT</button>
 </div>
 
 <script>
-    let gScene, gCam, gRen, gPlayer, gGrid;
-    let gObstacles=[], gStars=[], gStardust=[]; 
-    let gFrameId, isPlay=false;
-    let gSpeed=0.5, score=0, dustSession=0;
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const currentSkin = urlParams.get('skin') || 'default';
-
-    const skinConfig = {
-        default: { color: 0x00f2ea, bg: 0x05050a, grid: 0x00f2ea, title: "COSMIC GLIDE", geo: 'cone' },
-        gold: { color: 0xFFD700, bg: 0x1a1100, grid: 0xFFD700, title: "GOLDEN VOYAGE", geo: 'ship' },
-        neon: { color: 0xff00ff, bg: 0x1a001a, grid: 0xff00ff, title: "NEON GLITCH", geo: 'box' }
+    // --- CONFIG & STATE ---
+    const CONFIG = {
+        speed: 0.8,
+        laneWidth: 2.5,
+        poolSize: 15
     };
-    const activeStyle = skinConfig[currentSkin] || skinConfig.default;
+    
+    let state = { playing: false, score: 0, dust: 0, frame: 0, speedMult: 1 };
+    
+    // THREE.JS VARS
+    let scene, camera, renderer, player;
+    let pool = { obstacles: [], stars: [], dust: [] };
+    let grid, particles;
 
-    document.getElementById('game-title').innerText = activeStyle.title;
-    document.getElementById('game-title').style.color = '#' + activeStyle.color.toString(16);
-    document.getElementById('skin-label').innerText = currentSkin.toUpperCase() + " EDITION";
+    // --- INIT ENGINE ---
+    function init() {
+        scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x05050a, 0.035);
+        scene.background = new THREE.Color(0x05050a);
 
-    function exitGame() { window.parent.postMessage('close_game', '*'); }
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 100);
+        camera.position.set(0, 3, 10);
+        camera.rotation.x = -0.2;
 
-    function showMsg(text, color) {
-        const area = document.getElementById('msg-area');
-        const d = document.createElement('div');
-        d.className = 'game-msg';
-        d.innerText = text;
-        d.style.color = color;
-        area.appendChild(d);
-        setTimeout(() => d.remove(), 1500);
+        renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap pixel ratio for mobile perf
+        document.body.appendChild(renderer.domElement);
+
+        // LIGHTS
+        const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+        scene.add(ambient);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        dirLight.position.set(0, 10, 5);
+        scene.add(dirLight);
+
+        // GRID FLOOR
+        grid = new THREE.GridHelper(200, 50, 0x00f2ea, 0x111111);
+        grid.position.y = -1;
+        scene.add(grid);
+
+        // WARP PARTICLES (Visual Juice)
+        const pGeo = new THREE.BufferGeometry();
+        const pCount = 200;
+        const pPos = new Float32Array(pCount * 3);
+        for(let i=0; i<pCount*3; i++) pPos[i] = (Math.random()-0.5) * 100;
+        pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+        particles = new THREE.Points(pGeo, new THREE.PointsMaterial({color: 0xffffff, size: 0.2}));
+        scene.add(particles);
+
+        // PLAYER
+        createPlayer();
+        
+        // OBJECT POOLING (Crucial for performance)
+        createPool();
+
+        // CONTROLS
+        document.addEventListener('mousemove', onInput);
+        document.addEventListener('touchmove', (e) => { e.preventDefault(); onInput(e.touches[0]); }, {passive:false});
+        window.addEventListener('resize', onResize);
+
+        animate();
     }
 
-    function initGlider() {
-        document.getElementById('start-overlay').style.display = 'none';
-        isPlay = true;
+    function createPlayer() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const skin = urlParams.get('skin') || 'default';
         
-        gScene = new THREE.Scene();
-        gScene.fog = new THREE.FogExp2(activeStyle.bg, 0.04);
-        gScene.background = new THREE.Color(activeStyle.bg);
-        gCam = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 100);
-        gRen = new THREE.WebGLRenderer({antialias:true});
-        gRen.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById('game-glider').appendChild(gRen.domElement);
+        let color = 0x00f2ea;
+        let geo = new THREE.ConeGeometry(0.5, 1.5, 8);
         
-        gScene.add(new THREE.AmbientLight(0x404040, 2));
-        const dl = new THREE.DirectionalLight(0xffffff, 1); dl.position.set(0,10,5); gScene.add(dl);
-        gGrid = new THREE.GridHelper(200, 40, activeStyle.grid, 0x222222); gScene.add(gGrid);
+        if(skin === 'gold') { color = 0xFFD700; geo = new THREE.OctahedronGeometry(0.8); }
+        if(skin === 'neon') { color = 0xff00ff; geo = new THREE.BoxGeometry(1, 1, 1); }
 
-        let geo, mat;
-        mat = new THREE.MeshPhongMaterial({ color: activeStyle.color, emissive: 0x111111, shininess: 100 });
-
-        if(activeStyle.geo === 'cone') {
-            gPlayer = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.5, 8), mat);
-            gPlayer.rotation.x = Math.PI/2;
-        } else if(activeStyle.geo === 'ship') {
-            const group = new THREE.Group();
-            group.add(new THREE.Mesh(new THREE.TetrahedronGeometry(0.8), mat));
-            const wing = new THREE.Mesh(new THREE.BoxGeometry(2, 0.1, 0.5), mat); wing.position.set(0,0,0.2);
-            group.add(wing); gPlayer = group; gPlayer.rotation.x = -0.2;
-        } else {
-            mat.wireframe = true; gPlayer = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mat);
-        }
-
-        gPlayer.position.set(0,1,-2); gScene.add(gPlayer);
-
-        if(window.innerWidth < 600) { gCam.position.set(0, 5, 12); gCam.rotation.x = -0.4; } 
-        else { gCam.position.set(0, 3, 8); gCam.rotation.x = -0.3; }
-
-        document.addEventListener('mousemove', gMove);
-        document.addEventListener('touchmove', gTouch, {passive:false});
-        
-        gliderLoop();
+        const mat = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 0.5 });
+        player = new THREE.Mesh(geo, mat);
+        player.rotation.x = Math.PI / 2;
+        if(skin === 'gold') player.rotation.x = 0; // Adjust for different shape
+        scene.add(player);
     }
 
-    function gMove(e) {
-        if(!isPlay || !gPlayer) return;
-        const limit = window.innerWidth < 600 ? 5 : 8;
-        const x = (e.clientX/window.innerWidth)*2-1;
-        gPlayer.position.x = x * limit;
-        if(gPlayer.rotation) gPlayer.rotation.z = -x * 0.5;
-        else if(gPlayer.children) gPlayer.rotation.z = -x * 0.5; 
+    function createPool() {
+        // Create reusable objects mostly off-screen
+        const obsGeo = new THREE.BoxGeometry(2, 2, 2);
+        const obsMat = new THREE.MeshStandardMaterial({ color: 0xff4757, wireframe: true });
+        
+        const starGeo = new THREE.DodecahedronGeometry(0.5);
+        const starMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+        const dustGeo = new THREE.TetrahedronGeometry(0.6);
+        const dustMat = new THREE.MeshBasicMaterial({ color: 0xFFD700 });
+
+        for(let i=0; i<CONFIG.poolSize; i++) {
+            // Obstacles
+            let o = new THREE.Mesh(obsGeo, obsMat);
+            o.position.set(0, -100, 0); // Hide initially
+            o.active = false;
+            scene.add(o);
+            pool.obstacles.push(o);
+
+            // Stars
+            let s = new THREE.Mesh(starGeo, starMat);
+            s.position.set(0, -100, 0);
+            s.active = false;
+            scene.add(s);
+            pool.stars.push(s);
+
+            // Dust
+            let d = new THREE.Mesh(dustGeo, dustMat);
+            d.position.set(0, -100, 0);
+            d.active = false;
+            scene.add(d);
+            pool.dust.push(d);
+        }
     }
-    function gTouch(e) { e.preventDefault(); gMove(e.touches[0]); }
 
-    function gliderLoop() {
-        if(!isPlay) return;
+    function spawnObject(type) {
+        // Find first inactive object in pool
+        const list = pool[type];
+        const obj = list.find(o => !o.active);
+        if(!obj) return; // Pool empty, skip spawn (better than lag)
 
-        // Obstacles
-        if(Math.random() < 0.03) {
-            const obs = new THREE.Mesh(new THREE.BoxGeometry(1.5,1.5,1.5), new THREE.MeshPhongMaterial({color:0xff4757}));
-            obs.position.set((Math.random()*16)-8, 1, -50); gScene.add(obs); gObstacles.push(obs);
-        }
-        // Score Stars
-        if(Math.random() < 0.05) {
-            const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.3), new THREE.MeshBasicMaterial({color:0xffffff}));
-            star.position.set((Math.random()*16)-8, 1.5, -50); gScene.add(star); gStars.push(star);
-        }
-        // STARDUST (FARMING) - Increased rate for purchasing system
-        if(Math.random() < 0.01) { // 1% chance per frame (roughly every 2s)
-            const dust = new THREE.Mesh(new THREE.DodecahedronGeometry(0.6), new THREE.MeshBasicMaterial({color: 0xFFD700, wireframe: true}));
-            dust.position.set((Math.random()*14)-7, 2, -60);
-            gScene.add(dust); gStardust.push(dust);
-        }
+        obj.active = true;
+        obj.position.z = -80; // Start far away
+        obj.position.x = (Math.random() - 0.5) * 15; // Random lane
+        obj.position.y = 0;
+        
+        // Random rotation init
+        obj.rotation.set(Math.random(), Math.random(), Math.random());
+    }
 
-        const pBox = new THREE.Box3().setFromObject(gPlayer);
+    function onInput(e) {
+        if(!state.playing) return;
+        // Normalize -1 to 1
+        const x = (e.clientX / window.innerWidth) * 2 - 1;
+        player.position.x = x * 8; // Limit width
+        player.rotation.z = -x * 0.5; // Bank effect
+    }
 
-        // Move/Check
-        for(let i=gObstacles.length-1; i>=0; i--) {
-            let o = gObstacles[i]; o.position.z += gSpeed;
-            if(new THREE.Box3().setFromObject(o).intersectsBox(pBox)) { gameOver(); return; }
-            if(o.position.z > 10) { gScene.remove(o); gObstacles.splice(i,1); }
-        }
-        for(let i=gStars.length-1; i>=0; i--) {
-            let s = gStars[i]; s.position.z += gSpeed; s.rotation.y += 0.1;
-            if(s.position.distanceTo(gPlayer.position) < 2) {
-                gScene.remove(s); gStars.splice(i,1); score += 50;
-            } else if(s.position.z > 10) { gScene.remove(s); gStars.splice(i,1); }
-        }
-        for(let i=gStardust.length-1; i>=0; i--) {
-            let d = gStardust[i]; d.position.z += gSpeed; d.rotation.x += 0.05;
-            if(d.position.distanceTo(gPlayer.position) < 2.5) {
-                gScene.remove(d); gStardust.splice(i,1);
-                dustSession++;
-                document.getElementById('dust-val').innerText = dustSession;
-                showMsg("+1 ✨", "#FFD700");
-                window.parent.postMessage({type: 'stardust_collected'}, '*');
-            } else if(d.position.z > 10) { gScene.remove(d); gStardust.splice(i,1); }
-        }
+    function startGame() {
+        document.getElementById('start-screen').style.display = 'none';
+        state.playing = true;
+        state.score = 0;
+        state.dust = 0;
+        state.speedMult = 1;
+        updateHUD();
+    }
 
-        if(currentSkin === 'neon' && gPlayer) gPlayer.rotation.x += (Math.random()-0.5)*0.1;
-
-        gSpeed += 0.0005; score += 0.5;
-        document.getElementById('score-val').innerText = Math.floor(score);
-        gRen.render(gScene, gCam);
-        gFrameId = requestAnimationFrame(gliderLoop);
+    function resetGame() {
+        document.getElementById('game-over').style.display = 'none';
+        // Reset all objects
+        [...pool.obstacles, ...pool.stars, ...pool.dust].forEach(o => {
+            o.active = false;
+            o.position.set(0, -100, 0);
+        });
+        startGame();
     }
 
     function gameOver() {
-        isPlay = false;
+        state.playing = false;
         document.getElementById('game-over').style.display = 'flex';
-        document.getElementById('score-final').innerText = Math.floor(score);
-        document.getElementById('final-dust').innerText = dustSession;
+        document.getElementById('final-score').innerText = Math.floor(state.score);
         
-        let scores = JSON.parse(localStorage.getItem('brainArcadeV6') || '{}');
-        if(!scores.glider || Math.floor(score) > scores.glider) {
-            scores.glider = Math.floor(score);
-            localStorage.setItem('brainArcadeV6', JSON.stringify(scores));
-        }
+        // Save High Score via Parent
+        window.parent.postMessage({ type: 'game_over', game: 'cosmic', score: state.score }, '*');
     }
 
-    window.addEventListener('resize', () => {
-        if(!gCam || !gRen) return;
-        gCam.aspect = window.innerWidth / window.innerHeight;
-        gCam.updateProjectionMatrix();
-        gRen.setSize(window.innerWidth, window.innerHeight);
-    });
+    function showMsg(txt) {
+        const d = document.createElement('div');
+        d.className = 'msg-pop'; d.innerText = txt;
+        document.getElementById('msg-layer').appendChild(d);
+        setTimeout(()=>d.remove(), 1000);
+    }
+
+    function updateHUD() {
+        document.getElementById('score-disp').innerText = Math.floor(state.score);
+        document.getElementById('dust-disp').innerText = state.dust;
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+
+        if(!state.playing) {
+            // Idle rotation
+            if(player) player.rotation.y += 0.01;
+            return;
+        }
+
+        // 1. Move Grid (Illusion of speed)
+        grid.position.z = (grid.position.z + CONFIG.speed * state.speedMult) % 10;
+        
+        // 2. Warp Particles
+        const positions = particles.geometry.attributes.position.array;
+        for(let i=2; i<positions.length; i+=3) {
+            positions[i] += CONFIG.speed * 2 * state.speedMult;
+            if(positions[i] > 10) positions[i] = -100;
+        }
+        particles.geometry.attributes.position.needsUpdate = true;
+
+        // 3. Spawning Logic
+        if(Math.random() < 0.02) spawnObject('obstacles');
+        if(Math.random() < 0.03) spawnObject('stars');
+        if(Math.random() < 0.005) spawnObject('dust'); // Rare
+
+        // 4. Update Objects & Collision
+        const pBox = new THREE.Box3().setFromObject(player);
+        const checkCollision = (list, type) => {
+            list.forEach(obj => {
+                if(!obj.active) return;
+                
+                obj.position.z += CONFIG.speed * state.speedMult;
+                obj.rotation.x += 0.05;
+                obj.rotation.y += 0.05;
+
+                // Collision
+                const oBox = new THREE.Box3().setFromObject(obj);
+                if(pBox.intersectsBox(oBox)) {
+                    // Hit logic
+                    obj.active = false;
+                    obj.position.set(0,-100,0);
+                    
+                    if(type === 'obstacle') {
+                        gameOver();
+                    } else if(type === 'star') {
+                        state.score += 50;
+                    } else if(type === 'dust') {
+                        state.dust++;
+                        showMsg("+1 ✨");
+                        window.parent.postMessage({type: 'stardust_collected'}, '*');
+                    }
+                }
+
+                // Despawn
+                if(obj.position.z > 5) {
+                    obj.active = false;
+                    obj.position.set(0,-100,0);
+                }
+            });
+        };
+
+        checkCollision(pool.obstacles, 'obstacle');
+        checkCollision(pool.stars, 'star');
+        checkCollision(pool.dust, 'dust');
+
+        // 5. Progression
+        state.score += 0.1 * state.speedMult;
+        state.speedMult += 0.0005;
+        updateHUD();
+
+        renderer.render(scene, camera);
+    }
+
+    function onResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    init();
 </script>
 </body>
 </html>
