@@ -26,6 +26,8 @@
         @keyframes float { 0% {transform:translateY(0px);} 50% {transform:translateY(-10px);} 100% {transform:translateY(0px);} }  
         .float-anim { animation: float 3s ease-in-out infinite; }  
 
+        @keyframes fadeUp { 0%{opacity:0; transform:translateY(20px);} 100%{opacity:1; transform:translateY(0);} }
+
         /* --- ALIVE HEADER ANIMATION --- */
         @keyframes alive-pulse {
             0% { text-shadow: 0 0 10px rgba(191, 0, 255, 0.5); transform: scale(1); letter-spacing: 0px; }
@@ -344,7 +346,10 @@
         stardust: 0, 
         egg: { active: false, hatchTime: 0, ready: false },
         unlockedSkins: [], 
-        activeSkins: { cosmic: 'default', arcade: 'default' } 
+        activeSkins: { cosmic: 'default', arcade: 'default' },
+        // NEW: Daily Streak Tracking
+        lastLogin: 0,
+        streak: 0
     };  
     
     const rewardPool = [
@@ -356,11 +361,60 @@
 
     function saveData() { localStorage.setItem('brainArcadeV6_Data', JSON.stringify(appData)); updateUI(); }
 
+    // --- DAILY REWARD SYSTEM (NEW) ---
+    function checkDailyReward() {
+        const now = Date.now();
+        const oneDay = 24 * 60 * 60 * 1000;
+        
+        // If first time or more than 24 hours since last login
+        if (now - appData.lastLogin > oneDay) {
+            
+            // If within 48 hours, increment streak. Else reset.
+            if (now - appData.lastLogin < (oneDay * 2)) {
+                appData.streak++;
+            } else {
+                appData.streak = 1;
+            }
+            
+            appData.lastLogin = now;
+            
+            // GIVE REWARD (Formula: Base 5 + Streak * 2)
+            const reward = 5 + (appData.streak * 2); 
+            appData.stardust += reward;
+            saveData();
+            
+            // SHOW POPUP
+            showDailyPopup(reward, appData.streak);
+        }
+    }
+
+    function showDailyPopup(amount, streak) {
+        const div = document.createElement('div');
+        div.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 500; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            animation: fadeUp 0.5s ease-out; backdrop-filter: blur(10px);
+        `;
+        div.innerHTML = `
+            <h1 style="color: #FFD700; font-family: var(--font-head); font-size: 3rem; margin: 0; text-shadow:0 0 20px #FFD700;">DAILY GIFT</h1>
+            <p style="color: #fff; font-family: var(--font-body); font-size:1.2rem; margin-top:10px;">Streak: ${streak} Days 🔥</p>
+            <div style="font-size: 4rem; margin: 20px;">✨ +${amount}</div>
+            <button onclick="this.parentElement.remove()" style="
+                background: linear-gradient(45deg, #00f2ea, #bf00ff); border: none; padding: 15px 40px;
+                font-family: var(--font-head); font-weight: 900; font-size: 1.2rem; color: #fff;
+                border-radius: 30px; cursor: pointer; box-shadow: 0 0 20px rgba(0,242,234,0.5);">COLLECT</button>
+        `;
+        document.body.appendChild(div);
+    }
+
     function loadData() {  
         try {  
             let s = localStorage.getItem('brainArcadeV6_Data');  
             if(s) Object.assign(appData, JSON.parse(s));  
         } catch(e) {}  
+
+        checkDailyReward(); // Check for daily bonus immediately on load
         updateUI();
     }  
 
