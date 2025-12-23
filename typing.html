@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Type Attack: Cosmic Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #05050a;
+            --cyan: #00f2ea;
+            --purple: #bf00ff;
+            --gold: #FFD700;
+            --red: #ff0055;
+            --font-head: 'Orbitron', sans-serif;
+            --font-body: 'Poppins', sans-serif;
+        }
+
+        body {
+            margin: 0; 
+            background-color: var(--bg-dark); 
+            color: #fff; 
+            font-family: var(--font-head); 
+            overflow: hidden; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            user-select: none; 
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* --- BACKGROUND FX (Matching Gem.html) --- */
+        .nebula-bg { position: fixed; top: 0; left: 0; width: 100vw; height: 100%; z-index: -2; background: radial-gradient(circle at 50% 50%, #1a0b2e, #05050a 80%); }
+        .star-field { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.6; background-image: radial-gradient(2px 2px at 40% 40%, rgba(255,255,255,0.8), transparent); background-size: 300px 300px; animation: drift 60s linear infinite; }
+        @keyframes drift { from { background-position: 0 0; } to { background-position: 0 300px; } }
+
+        /* --- LAYOUT --- */
+        /* Top Bar */
+        .ui-bar {
+            height: 60px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 20px; z-index: 10;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+
+        .home-btn {
+            background: rgba(255,255,255,0.1); border: 1px solid var(--cyan); 
+            color: var(--cyan); padding: 5px 12px; border-radius: 20px; 
+            font-size: 0.8rem; cursor: pointer; text-decoration: none; 
+            transition: 0.2s; display: flex; align-items: center; gap: 5px;
+        }
+        .home-btn:active { transform: scale(0.95); background: var(--cyan); color: #000; }
+
+        .stats-group { display: flex; gap: 20px; }
+        .stat-box { text-align: center; }
+        .stat-label { font-size: 0.6rem; color: #aaa; letter-spacing: 1px; }
+        .stat-val { font-size: 1.2rem; color: var(--gold); text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+
+        /* Game Area (Flexible) */
+        #game-area {
+            position: relative; 
+            flex: 1; /* Takes remaining space */
+            width: 100%; 
+            overflow: hidden;
+            border-bottom: 2px solid var(--purple);
+            box-shadow: 0 10px 30px rgba(191, 0, 255, 0.2);
+        }
+
+        /* Keyboard Area (Fixed height relative to content) */
+        #keyboard {
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            padding: 10px 5px;
+            padding-bottom: max(10px, env(safe-area-inset-bottom)); /* iPhone Home Bar Safe */
+            display: flex; flex-direction: column; gap: 8px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            z-index: 20;
+        }
+
+        .kb-row { display: flex; justify-content: center; gap: 6px; width: 100%; }
+        
+        .key {
+            flex: 1; height: 45px; max-width: 50px;
+            background: linear-gradient(180deg, #2a2a35, #151520);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 3px solid #000;
+            border-radius: 8px;
+            color: #fff; font-size: 1.2rem; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; transition: 0.1s;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            -webkit-user-select: none;
+        }
+        
+        .key:active, .key.active-visual {
+            transform: translateY(3px);
+            border-bottom: 0px solid #000;
+            background: var(--cyan);
+            color: #000;
+            box-shadow: 0 0 15px var(--cyan);
+        }
+
+        /* --- GAME ELEMENTS --- */
+        .word-enemy {
+            position: absolute; 
+            color: #fff; 
+            font-family: var(--font-head);
+            font-size: 1.1rem; 
+            padding: 5px 12px; 
+            background: rgba(20, 20, 40, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            backdrop-filter: blur(4px);
+            transition: transform 0.1s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            white-space: nowrap;
+        }
+
+        .word-enemy.targeted { 
+            border-color: var(--gold); 
+            background: rgba(255, 215, 0, 0.15); 
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+            z-index: 5;
+        }
+
+        .matched { color: var(--cyan); text-shadow: 0 0 8px var(--cyan); }
+        
+        /* Laser */
+        .laser {
+            position: absolute; bottom: 0; width: 4px; 
+            background: var(--cyan);
+            transform-origin: bottom center; 
+            display: none;
+            box-shadow: 0 0 15px var(--cyan), 0 0 30px var(--purple); 
+            z-index: 1;
+            border-radius: 4px;
+        }
+
+        /* Explosion Particle (Simple) */
+        .explosion {
+            position: absolute; width: 50px; height: 50px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #fff, var(--purple), transparent);
+            transform: translate(-50%, -50%) scale(0);
+            animation: explode 0.3s ease-out forwards;
+            pointer-events: none;
+            z-index: 6;
+        }
+        @keyframes explode { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(2); opacity: 0; } }
+
+        /* --- MODAL --- */
+        #modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 5, 10, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        
+        .modal-content {
+            text-align: center;
+            border: 1px solid var(--purple);
+            padding: 40px; border-radius: 20px;
+            background: rgba(255,255,255,0.05);
+            box-shadow: 0 0 50px rgba(191,0,255,0.2);
+            animation: float 4s ease-in-out infinite;
+        }
+
+        h1 { margin: 0 0 10px 0; background: linear-gradient(to right, var(--cyan), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2.5rem; letter-spacing: 2px; }
+        
+        .btn-start {
+            background: linear-gradient(45deg, var(--cyan), var(--purple));
+            border: none; padding: 15px 40px; 
+            font-family: var(--font-head); font-size: 1.2rem; font-weight: bold; color: #fff;
+            border-radius: 30px; margin-top: 25px; cursor: pointer;
+            box-shadow: 0 0 20px rgba(0, 242, 234, 0.4);
+            transition: 0.2s;
+        }
+        .btn-start:active { transform: scale(0.95); }
+        
+        @keyframes float { 0% {transform:translateY(0px);} 50% {transform:translateY(-10px);} 100% {transform:translateY(0px);} }
+
+    </style>
+</head>
+<body>
+
+    <div class="nebula-bg"></div>
+    <div class="star-field"></div>
+
+    <div class="ui-bar">
+        <a href="#" class="home-btn" onclick="exitGame()">✕ EXIT</a>
+        <div class="stats-group">
+            <div class="stat-box">
+                <div class="stat-label">LEVEL</div>
+                <div class="stat-val" id="level">1</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">SCORE</div>
+                <div class="stat-val" id="score">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-area">
+        <div id="laser" class="laser"></div>
+    </div>
+
+    <div id="keyboard"></div>
+
+    <div id="modal">
+        <div class="modal-content">
+            <h1>TYPE<br>ATTACK</h1>
+            <p style="color:#aaa; letter-spacing:1px; margin-bottom: 5px;">DEFEND THE SYSTEM</p>
+            <p id="final-score-display" style="color:var(--gold); font-size:1.5rem; display:none; margin:10px 0;">SCORE: 0</p>
+            <button class="btn-start" onclick="startGame()">INITIATE</button>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIG & DATA ---
+        const levelWords = {
+            1: ["DATA", "CODE", "NEON", "BYTE", "LINK", "GRID", "NODE", "FLUX"],
+            2: ["LASER", "CYBER", "POWER", "DRONE", "ALPHA", "OMEGA", "PIXEL"],
+            3: ["SYSTEM", "MATRIX", "VECTOR", "ENERGY", "PLASMA", "ORBIT"],
+            4: ["NETWORK", "DIGITAL", "VIRTUAL", "STEALTH", "UPGRADE"],
+            5: ["PROTOCOL", "FIREWALL", "INFINITY", "OVERLOAD", "TERMINAL"]
+        };
+
+        const gameArea = document.getElementById('game-area');
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        let activeWords = []; 
+        let score = 0;
+        let level = 1;
+        let spawnRate = 2000;
+        let lastSpawn = 0;
+        let isPlaying = false;
+        let animationId;
+        
+        // --- KEYBOARD GENERATION ---
+        const keys = [
+            "QWERTYUIOP",
+            "ASDFGHJKL",
+            "ZXCVBNM"
+        ];
+        const kbContainer = document.getElementById('keyboard');
+        
+        keys.forEach(rowStr => {
+            let rowDiv = document.createElement('div');
+            rowDiv.className = 'kb-row';
+            rowStr.split('').forEach(char => {
+                let key = document.createElement('div');
+                key.className = 'key';
+                key.innerText = char;
+                key.dataset.char = char;
+                
+                // Touch Logic
+                key.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    triggerKey(char);
+                }, {passive: false});
+
+                // Mouse Logic
+                key.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    triggerKey(char);
+                });
+
+                rowDiv.appendChild(key);
+            });
+            kbContainer.appendChild(rowDiv);
+        });
+
+        function triggerKey(char) {
+            handleInput(char);
+            // Visual Feedback
+            const keyEl = document.querySelector(`.key[data-char="${char}"]`);
+            if(keyEl) {
+                keyEl.classList.add('active-visual');
+                setTimeout(() => keyEl.classList.remove('active-visual'), 150);
+            }
+        }
+
+        // --- AUDIO ENGINE ---
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'laser') {
+                // Pew Pew
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+                gain.gain.setValueAtTime(0.05, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                osc.start();
+                osc.stop(now + 0.15);
+            } else if (type === 'explode') {
+                // Boom
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(100, now);
+                osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.3);
+                gain.gain.setValueAtTime(0.05, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                osc.start();
+                osc.stop(now + 0.3);
+            }
+        }
+
+        // --- GAME LOOP ---
+        function startGame() {
+            // Unblock Audio
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            document.getElementById('modal').style.display = 'none';
+            document.getElementById('final-score-display').style.display = 'none';
+            
+            score = 0; level = 1; spawnRate = 2000;
+            
+            // Clean up old words
+            activeWords.forEach(w => w.el.remove());
+            activeWords = [];
+            
+            updateUI();
+            isPlaying = true;
+            lastSpawn = performance.now();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function gameLoop(time) {
+            if(!isPlaying) return;
+
+            // Spawning Logic
+            if (time - lastSpawn > spawnRate) {
+                spawnWord();
+                lastSpawn = time;
+                // Increase difficulty
+                if(spawnRate > 800) spawnRate -= 20; 
+            }
+
+            // Movement Logic
+            activeWords.forEach((w) => {
+                w.y += w.speed;
+                w.el.style.top = w.y + 'px';
+                
+                // Game Over Check
+                if (w.y > gameArea.clientHeight - 40) {
+                    w.el.style.borderColor = "red";
+                    gameOver();
+                }
+            });
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function spawnWord() {
+            let poolLvl = Math.min(level, 5);
+            let pool = levelWords[poolLvl];
+            let text = pool[Math.floor(Math.random() * pool.length)];
+            
+            let el = document.createElement('div');
+            el.className = 'word-enemy';
+            el.innerText = text;
+            
+            // Random X position ensuring it stays within bounds
+            // Using 80% width to avoid edges
+            let maxW = gameArea.clientWidth;
+            let x = Math.floor(Math.random() * (maxW - 120)) + 10;
+            
+            el.style.left = x + 'px';
+            el.style.top = '-50px';
+            gameArea.appendChild(el);
+            
+            activeWords.push({
+                el: el, text: text, typed: 0, x: x, y: -50,
+                speed: 0.5 + (level * 0.15) // Speed increases with level
+            });
+        }
+
+        // --- INPUT HANDLING ---
+        function handleInput(char) {
+            if(!isPlaying) return;
+            
+            // 1. Check if we have an already partially typed word
+            let target = activeWords.find(w => w.typed > 0 && w.text[w.typed] === char);
+
+            // 2. If not, look for a new word starting with this char
+            if (!target) {
+                // Filter words that haven't been touched yet
+                let candidates = activeWords.filter(w => w.typed === 0 && w.text[0] === char);
+                if(candidates.length > 0) {
+                    // Pick the one closest to the bottom (highest threat)
+                    candidates.sort((a,b) => b.y - a.y);
+                    target = candidates[0];
+                }
+            }
+
+            if (target) {
+                // Correct Hit
+                fireLaser(target);
+                target.typed++;
+                
+                // Update Visuals (Green/Cyan text for typed part)
+                let html = `<span class="matched">${target.text.substring(0, target.typed)}</span>${target.text.substring(target.typed)}`;
+                target.el.innerHTML = html;
+                target.el.classList.add('targeted');
+
+                // Word Complete
+                if (target.typed === target.text.length) {
+                    score += target.text.length * 10;
+                    createExplosion(target.x + 40, target.y + 20);
+                    playSound('explode');
+                    
+                    // Level Up?
+                    if(score > level * 500) level++;
+                    updateUI();
+                    
+                    // Remove
+                    target.el.remove();
+                    activeWords = activeWords.filter(w => w !== target);
+                }
+            }
+        }
+
+        // PC Keyboard Listener
+        window.addEventListener('keydown', (e) => {
+            const char = e.key.toUpperCase();
+            if(/[A-Z]/.test(char) && char.length === 1) triggerKey(char);
+        });
+
+        function fireLaser(targetWord) {
+            playSound('laser');
+            const laser = document.getElementById('laser');
+            
+            // Calculate center bottom of screen
+            const startX = gameArea.clientWidth / 2;
+            const startY = gameArea.clientHeight;
+            
+            // Target coordinates (approx center of word)
+            const tx = targetWord.x + (targetWord.el.clientWidth / 2);
+            const ty = targetWord.y + 20;
+
+            const dx = tx - startX;
+            const dy = startY - ty;
+            
+            // Math.atan2(y, x) -> but we want angle from vertical up.
+            // Standard atan2 gives angle from positive X axis.
+            // CSS rotation 0 is up (if we set stick to vertical).
+            // Actually simpler: tan(theta) = opposite/adjacent.
+            // angle = 90 - degrees(atan2(dy, dx))
+            const angleRad = Math.atan2(dy, dx); 
+            const angleDeg = 90 - (angleRad * 180 / Math.PI);
+            
+            const dist = Math.sqrt(dx*dx + dy*dy);
+
+            laser.style.height = dist + 'px';
+            laser.style.left = startX + 'px';
+            laser.style.transform = `translateX(-50%) rotate(${angleDeg}deg)`;
+            laser.style.display = 'block';
+
+            setTimeout(() => laser.style.display = 'none', 80);
+        }
+
+        function createExplosion(x, y) {
+            const exp = document.createElement('div');
+            exp.className = 'explosion';
+            exp.style.left = x + 'px';
+            exp.style.top = y + 'px';
+            gameArea.appendChild(exp);
+            setTimeout(() => exp.remove(), 350);
+        }
+
+        function updateUI() {
+            document.getElementById('score').innerText = score;
+            document.getElementById('level').innerText = level;
+        }
+
+        function gameOver() {
+            isPlaying = false;
+            cancelAnimationFrame(animationId);
+            
+            document.querySelector('#modal h1').innerHTML = "SYSTEM<br>BREACHED";
+            document.querySelector('.btn-start').innerText = "REBOOT SYSTEM";
+            document.getElementById('final-score-display').style.display = 'block';
+            document.getElementById('final-score-display').innerText = "FINAL SCORE: " + score;
+            document.getElementById('modal').style.display = 'flex';
+
+            // Send score to Parent (Brain Arcade)
+            if(window.parent) {
+                window.parent.postMessage({
+                    type: 'game_over',
+                    game: 'typing', // Unique ID for this game
+                    score: score
+                }, '*');
+            }
+        }
+
+        function exitGame() {
+            if(window.parent) {
+                window.parent.postMessage('close_game', '*');
+            }
+        }
+    </script>
+</body>
+</html>
