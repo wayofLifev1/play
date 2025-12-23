@@ -26,8 +26,6 @@
         @keyframes float { 0% {transform:translateY(0px);} 50% {transform:translateY(-10px);} 100% {transform:translateY(0px);} }  
         .float-anim { animation: float 3s ease-in-out infinite; }  
 
-        @keyframes fadeUp { 0%{opacity:0; transform:translateY(20px);} 100%{opacity:1; transform:translateY(0);} }
-
         /* --- ALIVE HEADER ANIMATION --- */
         @keyframes alive-pulse {
             0% { text-shadow: 0 0 10px rgba(191, 0, 255, 0.5); transform: scale(1); letter-spacing: 0px; }
@@ -202,7 +200,18 @@
             </div>  
             <div id="card-runner" class="game-card float-anim" onclick="launchGame('arcade.html?game=runner', 'arcade')" style="border-top: 3px solid #bf00ff; animation-delay: 0.8s;">  
                 <h3>ROCKET RUN</h3> <span class="hs-label">BEST</span><span id="hs-runner" class="hs-val">0</span>  
-            </div>  
+            </div>
+            
+            <div id="card-typing" class="game-card float-anim" onclick="launchGame('typing.html', 'arcade')" style="border-top: 3px solid #ff0055; animation-delay: 0.9s;">  
+                <h3 style="color:#ff0055">TYPE ATTACK</h3> <span class="hs-label">BEST</span><span id="hs-typing" class="hs-val">0</span>  
+            </div>
+            <div id="card-blast" class="game-card float-anim" onclick="launchGame('blast.html', 'arcade')" style="border-top: 3px solid #00e676; animation-delay: 1.0s;">  
+                <h3 style="color:#00e676">BLOCK BLAST</h3> <span class="hs-label">BEST</span><span id="hs-blast" class="hs-val">0</span>  
+            </div>
+            <div id="card-2048" class="game-card float-anim" onclick="launchGame('2048.html', 'arcade')" style="border-top: 3px solid #edc22e; animation-delay: 1.1s;">  
+                <h3 style="color:#edc22e">2048 NEON</h3> <span class="hs-label">BEST</span><span id="hs-2048" class="hs-val">0</span>  
+            </div>
+            
         </div>  
     </div>  
 
@@ -342,14 +351,12 @@
     // --- APP LOGIC ---
     // DATA STRUCTURE
     const appData = { 
-        scores: { memory:0, math:0, color:0, odd:0, order:0, dash:0, reflex:0, runner:0, glider:0 },
+        // Added typing, blast, and 2048 to scores
+        scores: { memory:0, math:0, color:0, odd:0, order:0, dash:0, reflex:0, runner:0, glider:0, typing:0, blast:0, '2048':0 },
         stardust: 0, 
         egg: { active: false, hatchTime: 0, ready: false },
         unlockedSkins: [], 
-        activeSkins: { cosmic: 'default', arcade: 'default' },
-        // NEW: Daily Streak Tracking
-        lastLogin: 0,
-        streak: 0
+        activeSkins: { cosmic: 'default', arcade: 'default' } 
     };  
     
     const rewardPool = [
@@ -361,60 +368,11 @@
 
     function saveData() { localStorage.setItem('brainArcadeV6_Data', JSON.stringify(appData)); updateUI(); }
 
-    // --- DAILY REWARD SYSTEM (NEW) ---
-    function checkDailyReward() {
-        const now = Date.now();
-        const oneDay = 24 * 60 * 60 * 1000;
-        
-        // If first time or more than 24 hours since last login
-        if (now - appData.lastLogin > oneDay) {
-            
-            // If within 48 hours, increment streak. Else reset.
-            if (now - appData.lastLogin < (oneDay * 2)) {
-                appData.streak++;
-            } else {
-                appData.streak = 1;
-            }
-            
-            appData.lastLogin = now;
-            
-            // GIVE REWARD (Formula: Base 5 + Streak * 2)
-            const reward = 5 + (appData.streak * 2); 
-            appData.stardust += reward;
-            saveData();
-            
-            // SHOW POPUP
-            showDailyPopup(reward, appData.streak);
-        }
-    }
-
-    function showDailyPopup(amount, streak) {
-        const div = document.createElement('div');
-        div.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 500; display: flex;
-            flex-direction: column; align-items: center; justify-content: center;
-            animation: fadeUp 0.5s ease-out; backdrop-filter: blur(10px);
-        `;
-        div.innerHTML = `
-            <h1 style="color: #FFD700; font-family: var(--font-head); font-size: 3rem; margin: 0; text-shadow:0 0 20px #FFD700;">DAILY GIFT</h1>
-            <p style="color: #fff; font-family: var(--font-body); font-size:1.2rem; margin-top:10px;">Streak: ${streak} Days 🔥</p>
-            <div style="font-size: 4rem; margin: 20px;">✨ +${amount}</div>
-            <button onclick="this.parentElement.remove()" style="
-                background: linear-gradient(45deg, #00f2ea, #bf00ff); border: none; padding: 15px 40px;
-                font-family: var(--font-head); font-weight: 900; font-size: 1.2rem; color: #fff;
-                border-radius: 30px; cursor: pointer; box-shadow: 0 0 20px rgba(0,242,234,0.5);">COLLECT</button>
-        `;
-        document.body.appendChild(div);
-    }
-
     function loadData() {  
         try {  
             let s = localStorage.getItem('brainArcadeV6_Data');  
             if(s) Object.assign(appData, JSON.parse(s));  
         } catch(e) {}  
-
-        checkDailyReward(); // Check for daily bonus immediately on load
         updateUI();
     }  
 
@@ -462,7 +420,8 @@
         if(appData.activeSkins.cosmic === 'neon') cosmicCard.classList.add('skin-active-neon');
 
         // Apply Arcade Skin (to all arcade games)
-        const arcadeCards = ['card-memory', 'card-math', 'card-color', 'card-odd', 'card-order', 'card-dash', 'card-reflex', 'card-runner'];
+        // Added new games to this list
+        const arcadeCards = ['card-memory', 'card-math', 'card-color', 'card-odd', 'card-order', 'card-dash', 'card-reflex', 'card-runner', 'card-typing', 'card-blast', 'card-2048'];
         arcadeCards.forEach(id => {
             const el = document.getElementById(id);
             if(el) {
@@ -676,39 +635,13 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 <script>
-    // FIREBASE ANALYTICS & PRESENCE SYSTEM
+    // FIREBASE ANALYTICS (Kept same as before)
     const firebaseConfig = { apiKey: "AIzaSyCYPD6eFQvtwi6CMBkAbQ1SmkWA2qtby9s", authDomain: "wofplay-123.firebaseapp.com", databaseURL: "https://wofplay-123-default-rtdb.firebaseio.com", projectId: "wofplay-123", storageBucket: "wofplay-123.firebasestorage.app", messagingSenderId: "716443688368", appId: "1:716443688368:web:6ebd08d8d3a49f1c494a75" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    
-    // User ID generation
     let uid = localStorage.getItem('ba_uid');
     if (!uid) { uid = 'user_' + Math.floor(Math.random() * 100000); localStorage.setItem('ba_uid', uid); db.ref('stats/installs').transaction(c => (c || 0) + 1); }
-    
-    // Track Visits
     db.ref('stats/visits').transaction(current => (current || 0) + 1);
-
-    // --- ONLINE PRESENCE SYSTEM (NEW) ---
-    // This tells Firebase "I am here" and auto-removes the entry when "I leave"
-    const connectedRef = db.ref(".info/connected");
-    const userStatusDatabaseRef = db.ref("status/" + uid);
-
-    connectedRef.on("value", (snap) => {
-        if (snap.val() === true) {
-            // If we lose connection, remove this user from the list
-            userStatusDatabaseRef.onDisconnect().remove().then(() => {
-                // Determine device type roughly
-                const deviceType = /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop';
-                
-                // Add user to the online list
-                userStatusDatabaseRef.set({
-                    state: 'online',
-                    last_changed: firebase.database.ServerValue.TIMESTAMP,
-                    device: deviceType
-                });
-            });
-        }
-    });
 </script> 
 </body>  
 </html>
