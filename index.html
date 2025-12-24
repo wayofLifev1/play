@@ -149,10 +149,10 @@
                     <span style="font-size:1.2rem; margin-right:5px;">⬇️</span> INSTALL APP
                 </button>
                 <a href="https://twolife-v1.github.io/my/" target="_blank" rel="noopener noreferrer" class="float-anim" style="flex:1; text-decoration:none; display:flex; align-items:center; justify-content:center; padding:8px 10px; background: linear-gradient(45deg, #FFD700, #FFA500); box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3); border:none; border-radius:20px; color:#05050a; font-family:var(--font-head); font-weight: 900; font-size:0.75rem; transition:0.2s;">
-                   <img src="icon-512.png" style="height:24px; width:24px; margin-right:8px; border-radius:5px; vertical-align:middle;"> WaktuSolat
+                   <img src="icon-512.png" style="height:24px; width:24px; margin-right:8px; border-radius:5px; vertical-align:middle;" onerror="this.style.display='none'"> WaktuSolat
                 </a>
                 <a href="https://pipahcookiesapp.github.io/com/" target="_blank" rel="noopener noreferrer" class="float-anim" style="flex:1; text-decoration:none; display:flex; align-items:center; justify-content:center; padding:8px 10px; background: linear-gradient(45deg, #FFD700, #FFA500); box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3); border:none; border-radius:20px; color:#05050a; font-family:var(--font-head); font-weight: 900; font-size:0.75rem; transition:0.2s; animation-delay:0.3s;">
-                   <img src="icon.png" style="height:24px; width:24px; margin-right:8px; border-radius:5px; vertical-align:middle;"> PipahCookies
+                   <img src="icon.png" style="height:24px; width:24px; margin-right:8px; border-radius:5px; vertical-align:middle;" onerror="this.style.display='none'"> PipahCookies
                 </a>
             </div>
     </div>
@@ -180,24 +180,31 @@
             <div id="card-memory" class="game-card float-anim" onclick="launchGame('arcade.html?game=memory', 'arcade')" style="border-top: 3px solid #4facfe; animation-delay: 0.1s;">  
                 <h3>MEMORY MATRIX</h3> <span class="hs-label">BEST</span><span id="hs-memory" class="hs-val">0</span>  
             </div>  
+            
             <div id="card-math" class="game-card float-anim" onclick="launchGame('arcade.html?game=math', 'arcade')" style="border-top: 3px solid #bf00ff; animation-delay: 0.2s;">  
                 <h3>QUICK MATH</h3> <span class="hs-label">BEST</span><span id="hs-math" class="hs-val">0</span>  
             </div>  
+            
             <div id="card-color" class="game-card float-anim" onclick="launchGame('arcade.html?game=color', 'arcade')" style="border-top: 3px solid #f1c40f; animation-delay: 0.3s;">  
                 <h3>COLOR TRAP</h3> <span class="hs-label">BEST</span><span id="hs-color" class="hs-val">0</span>  
             </div>  
+            
             <div id="card-odd" class="game-card float-anim" onclick="launchGame('arcade.html?game=odd', 'arcade')" style="border-top: 3px solid #fff; animation-delay: 0.4s;">  
                 <h3>ODD ONE OUT</h3> <span class="hs-label">BEST</span><span id="hs-odd" class="hs-val">0</span>  
             </div>  
+            
             <div id="card-order" class="game-card float-anim" onclick="launchGame('arcade.html?game=order', 'arcade')" style="border-top: 3px solid #4facfe; animation-delay: 0.5s;">  
                 <h3>ORDER CHAOS</h3> <span class="hs-label">BEST</span><span id="hs-order" class="hs-val">0</span>  
             </div>  
+            
             <div id="card-dash" class="game-card float-anim" onclick="launchGame('arcade.html?game=dash', 'arcade')" style="border-top: 3px solid #00e676; animation-delay: 0.6s;">  
                 <h3>DIRECTION DASH</h3> <span class="hs-label">BEST</span><span id="hs-dash" class="hs-val">0</span>  
             </div>  
+            
             <div id="card-reflex" class="game-card float-anim" onclick="launchGame('arcade.html?game=reflex', 'arcade')" style="border-top: 3px solid #ff0080; animation-delay: 0.7s;">  
                 <h3>RAPID REFLEX</h3> <span class="hs-label">BEST</span><span id="hs-reflex" class="hs-val">0</span>  
             </div>  
+            
             <div id="card-runner" class="game-card float-anim" onclick="launchGame('arcade.html?game=runner', 'arcade')" style="border-top: 3px solid #bf00ff; animation-delay: 0.8s;">  
                 <h3>ROCKET RUN</h3> <span class="hs-label">BEST</span><span id="hs-runner" class="hs-val">0</span>  
             </div>
@@ -205,9 +212,11 @@
             <div id="card-typing" class="game-card float-anim" onclick="launchGame('typing.html', 'arcade')" style="border-top: 3px solid #ff0055; animation-delay: 0.9s;">  
                 <h3 style="color:#ff0055">TYPE ATTACK</h3> <span class="hs-label">BEST</span><span id="hs-typing" class="hs-val">0</span>  
             </div>
+            
             <div id="card-blast" class="game-card float-anim" onclick="launchGame('blast.html', 'arcade')" style="border-top: 3px solid #00e676; animation-delay: 1.0s;">  
                 <h3 style="color:#00e676">BLOCK BLAST</h3> <span class="hs-label">BEST</span><span id="hs-blast" class="hs-val">0</span>  
             </div>
+            
             <div id="card-2048" class="game-card float-anim" onclick="launchGame('2048.html', 'arcade')" style="border-top: 3px solid #edc22e; animation-delay: 1.1s;">  
                 <h3 style="color:#edc22e">2048 NEON</h3> <span class="hs-label">BEST</span><span id="hs-2048" class="hs-val">0</span>  
             </div>
@@ -273,55 +282,7 @@
 
 <script>
     // --- 1. INTERNAL CHILL GAME SOURCE ---
-    const chillGameCode = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Poppins:wght@400&display=swap" rel="stylesheet">
-        <style>
-            body { margin: 0; background: radial-gradient(circle at 50% 50%, #1a0b2e, #05050a 80%); font-family: 'Orbitron', sans-serif; color: white; height: 100vh; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; user-select: none; -webkit-tap-highlight-color: transparent; }
-            .back-btn { position:absolute; top:20px; left:20px; background: rgba(0,0,0,0.5); border: 1px solid #00f2ea; color: #00f2ea; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; backdrop-filter: blur(5px); z-index:100; }
-            #instruction { font-size: 1.8rem; letter-spacing: 2px; text-shadow: 0 0 10px #00f2ea; margin-bottom: 40px; text-align: center; color: #00f2ea; }
-            #breathing-circle { width: 160px; height: 160px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 4px solid rgba(0, 242, 234, 0.4); display: flex; justify-content: center; align-items: center; box-shadow: 0 0 30px rgba(0, 242, 234, 0.1); cursor: pointer; transition: transform 0.05s linear; }
-            .pulse { animation: p 2s infinite; }
-            @keyframes p { 0% {transform:scale(1); border-color: rgba(0,242,234,0.4);} 50% {transform:scale(1.05); border-color: rgba(191,0,255,0.8);} 100% {transform:scale(1); border-color: rgba(0,242,234,0.4);} }
-            #center-icon { font-size: 5rem; pointer-events: none; }
-            #progress-bar { position: absolute; bottom: 80px; width: 60%; height: 6px; background: #111; border-radius: 10px; overflow: hidden; border: 1px solid #333; }
-            #fill { width: 0%; height: 100%; background: linear-gradient(90deg, #00f2ea, #bf00ff); box-shadow: 0 0 10px #00f2ea; transition: width 0.5s; }
-        </style>
-    </head>
-    <body>
-        <div class="back-btn" onclick="window.parent.postMessage('close_game', '*')">✕</div>
-        <div id="instruction">HOLD TO CHARGE</div>
-        <div id="breathing-circle" class="pulse"><div id="center-icon">⚛️</div></div>
-        <div id="progress-bar"><div id="fill"></div></div>
-        <script>
-            let scale=1, progress=0, isHolding=false;
-            const circle = document.getElementById('breathing-circle');
-            const txt = document.getElementById('instruction');
-            const fill = document.getElementById('fill');
-            
-            function loop() {
-                if(isHolding) { if(scale<2.5) scale+=0.01; } else { if(scale>1) scale-=0.02; else scale=1; }
-                circle.style.transform = 'scale('+scale+')';
-                requestAnimationFrame(loop);
-            }
-            loop();
-            circle.addEventListener('mousedown', () => { isHolding=true; circle.classList.remove('pulse'); txt.innerText="INHALE..."; });
-            circle.addEventListener('touchstart', (e) => { e.preventDefault(); isHolding=true; circle.classList.remove('pulse'); txt.innerText="INHALE..."; });
-            window.addEventListener('mouseup', end);
-            window.addEventListener('touchend', end);
-            function end() { 
-                if(!isHolding) return;
-                isHolding=false; txt.innerText="EXHALE...";
-                if(scale>2.0) { progress+=20; fill.style.width=progress+'%'; if(progress>=100) { txt.innerText="RESTORED"; document.getElementById('center-icon').innerText="💠"; } }
-                else setTimeout(()=>{ if(!isHolding) txt.innerText="HOLD TO CHARGE"; }, 1000);
-            }
-        <\/script>
-    </body>
-    </html>`;
+    const chillGameCode = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;background:#05050a;color:#fff;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:sans-serif;}.btn{padding:15px 30px;background:#00f2ea;border:none;border-radius:30px;font-weight:bold;font-size:1.2rem;cursor:pointer;}.back{position:absolute;top:20px;left:20px;color:#fff;font-size:2rem;cursor:pointer;}</style></head><body><div class="back" onclick="window.parent.postMessage('close_game','*')">✕</div><h2>BREATHE</h2><div style="width:100px;height:100px;background:purple;border-radius:50%;animation:p 4s infinite"></div><script>document.body.onclick=()=>{window.parent.postMessage({type:'stardust_collected'},'*')};<\/script><style>@keyframes p{0%,100%{transform:scale(1)}50%{transform:scale(1.5)}}</style></body></html>`;
 
     function launchInternalChill() {
         const frame = document.getElementById('game-frame');
@@ -345,14 +306,15 @@
             });
         }
     });
-
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 
-    // --- APP LOGIC ---
-    // DATA STRUCTURE
+    // --- MAIN APP LOGIC ---
     const appData = { 
-        // Added typing, blast, and 2048 to scores
-        scores: { memory:0, math:0, color:0, odd:0, order:0, dash:0, reflex:0, runner:0, glider:0, typing:0, blast:0, '2048':0 },
+        // THESE KEYS MUST MATCH WHAT YOUR GAMES SEND via 'game_over'
+        scores: { 
+            memory:0, math:0, color:0, odd:0, order:0, dash:0, 
+            reflex:0, runner:0, glider:0, typing:0, blast:0, '2048':0 
+        },
         stardust: 0, 
         egg: { active: false, hatchTime: 0, ready: false },
         unlockedSkins: [], 
@@ -366,61 +328,62 @@
         { id: 'arcade_neon', game: 'arcade', name: 'Cyberpunk UI', skinId: 'neon' }
     ];
 
-    function saveData() { localStorage.setItem('brainArcadeV6_Data', JSON.stringify(appData)); updateUI(); }
+    // --- DATA HANDLING ---
+    function saveData() { 
+        localStorage.setItem('brainArcadeV6_Data', JSON.stringify(appData)); 
+        updateUI(); 
+    }
 
     function loadData() {  
         try {  
             let s = localStorage.getItem('brainArcadeV6_Data');  
-            if(s) Object.assign(appData, JSON.parse(s));  
-        } catch(e) {}  
+            if(s) {
+                const loaded = JSON.parse(s);
+                // Merge loaded data with default structure safely
+                appData.scores = { ...appData.scores, ...loaded.scores };
+                appData.stardust = loaded.stardust || 0;
+                appData.egg = loaded.egg || { active: false, hatchTime: 0, ready: false };
+                appData.unlockedSkins = loaded.unlockedSkins || [];
+                appData.activeSkins = loaded.activeSkins || { cosmic: 'default', arcade: 'default' };
+            }
+        } catch(e) { console.error("Save Corrupt", e); }  
         updateUI();
     }  
 
     function updateUI() {
-        // Update Scores
-        for(let k in appData.scores) { 
-            let e=document.getElementById(`hs-${k}`); 
-            if(e) e.innerText=appData.scores[k]; 
+        // 1. Update Scores in DOM
+        for(let key in appData.scores) { 
+            let el = document.getElementById(`hs-${key}`); 
+            if(el) {
+                el.innerText = appData.scores[key];
+            }
         } 
-        // Update Wallet
+        
+        // 2. Update Wallet
         document.getElementById('wallet-val').innerText = appData.stardust;
         
-        // Update Egg Status Icon
+        // 3. Update Egg Icon
         const icon = document.getElementById('main-egg-icon');
         const now = Date.now();
-        
-        // Reset Logic
-        icon.className = 'egg-icon';
+        icon.className = 'egg-icon'; // Reset class
         
         if(appData.egg.active) {
-            // Egg Exists
-            if(now >= appData.egg.hatchTime) {
-                icon.classList.add('egg-ready');
-            } else {
-                icon.classList.add('egg-incubating');
-            }
+            if(now >= appData.egg.hatchTime) icon.classList.add('egg-ready');
+            else icon.classList.add('egg-incubating');
         } else {
-            // No Egg
-            if(appData.stardust >= 10) {
-                icon.classList.add('egg-affordable');
-            } else {
-                icon.classList.add('egg-locked');
-            }
+            if(appData.stardust >= 10) icon.classList.add('egg-affordable');
+            else icon.classList.add('egg-locked');
         }
         updateMenuVisuals();
     }
 
     function updateMenuVisuals() {
-        // Reset all borders first
         document.querySelectorAll('.game-card').forEach(el => el.classList.remove('skin-active-gold', 'skin-active-neon'));
         
-        // Apply Cosmic Skin
         const cosmicCard = document.getElementById('card-cosmic');
         if(appData.activeSkins.cosmic === 'gold') cosmicCard.classList.add('skin-active-gold');
         if(appData.activeSkins.cosmic === 'neon') cosmicCard.classList.add('skin-active-neon');
 
-        // Apply Arcade Skin (to all arcade games)
-        // Added new games to this list
         const arcadeCards = ['card-memory', 'card-math', 'card-color', 'card-odd', 'card-order', 'card-dash', 'card-reflex', 'card-runner', 'card-typing', 'card-blast', 'card-2048'];
         arcadeCards.forEach(id => {
             const el = document.getElementById(id);
@@ -431,19 +394,71 @@
         });
     }
 
-    // --- WARDROBE LOGIC ---
+    // --- GAME LAUNCHER ---
+    function launchGame(url, category) {
+        const layer = document.getElementById('game-layer');
+        const frame = document.getElementById('game-frame');
+        let skinParam = '';
+        if (category && appData.activeSkins[category] !== 'default') {
+            const separator = url.includes('?') ? '&' : '?';
+            skinParam = `${separator}skin=${appData.activeSkins[category]}`;
+        }
+        frame.src = url + skinParam;
+        layer.style.display = 'block';
+    }
+
+    // --- MESSAGE LISTENER (FIXED FOR SCORES) ---
+    window.addEventListener('message', function(event) {
+        // 1. Close Game
+        if(event.data === 'close_game') {
+            document.getElementById('game-layer').style.display = 'none';
+            document.getElementById('game-frame').src = '';
+            loadData(); // Force refresh just in case
+        }
+
+        // 2. Stardust
+        if(event.data && event.data.type === 'stardust_collected') {
+            appData.stardust++;
+            saveData();
+            // Notification
+            const notif = document.createElement('div');
+            notif.innerHTML = "✨ +1";
+            notif.style.cssText = "position:fixed; top:50px; right:20px; color:#ffd700; font-family:var(--font-head); font-size:1.5rem; z-index:9999; animation:float 1s forwards; text-shadow:0 0 5px black;";
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 1000);
+        }
+
+        // 3. GAME OVER & HIGH SCORE
+        if(event.data && event.data.type === 'game_over') {
+            const gameID = event.data.game; 
+            const score = parseInt(event.data.score) || 0;
+
+            console.log("Score Received:", gameID, score);
+
+            // Initialize if missing (safety)
+            if(appData.scores[gameID] === undefined) {
+                appData.scores[gameID] = 0;
+            }
+
+            // Update if higher
+            if(score > appData.scores[gameID]) {
+                appData.scores[gameID] = score;
+                saveData(); // This triggers updateUI()
+                console.log("High score updated for " + gameID);
+            }
+        }
+    });
+
+    // --- WARDROBE & EGG LOGIC ---
     function openWardrobe() {
         const list = document.getElementById('skin-list');
         list.innerHTML = '';
-        
-        // 1. Default Option
         list.innerHTML += `<div style="margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;">
             <div style="color:#fff; font-weight:bold;">DEFAULT SYSTEM</div>
             <button onclick="equipSkin('cosmic','default')" style="margin:5px; padding:5px 10px; background:${appData.activeSkins.cosmic=='default'?'var(--cyan)':'#333'}; border:none; color:#fff;">Cosmic</button>
             <button onclick="equipSkin('arcade','default')" style="margin:5px; padding:5px 10px; background:${appData.activeSkins.arcade=='default'?'var(--cyan)':'#333'}; border:none; color:#fff;">Arcade</button>
         </div>`;
 
-        // 2. Unlocked Options
         if(appData.unlockedSkins.length === 0) {
             list.innerHTML += `<div style="color:#aaa; font-style:italic;">No skins unlocked yet. Hatch eggs!</div>`;
         } else {
@@ -468,49 +483,30 @@
     function equipSkin(game, skinId) {
         appData.activeSkins[game] = skinId;
         saveData();
-        openWardrobe(); // Refresh UI
+        openWardrobe(); 
     }
-
-    function closeWardrobe(e) {
-        if(e.target.id === 'wardrobe-modal') document.getElementById('wardrobe-modal').style.display = 'none';
-    }
-
-    // --- EGG BUYING LOGIC ---
+    function closeWardrobe(e) { if(e.target.id === 'wardrobe-modal') document.getElementById('wardrobe-modal').style.display = 'none'; }
 
     function buyEgg() {
         if(appData.stardust < 10) return;
-        
-        // Deduct Cost
         appData.stardust -= 10;
-        
-        // Init Egg
         appData.egg.active = true;
-        // 60 Second Timer (Fixed as per request)
         appData.egg.hatchTime = Date.now() + (60 * 1000); 
         appData.egg.ready = false;
-        
         saveData();
-        openEggUI(); // Refresh UI to Incubating View
+        openEggUI(); 
     }
 
     let eggTimerInterval;
-
     function openEggUI() {
         const modal = document.getElementById('egg-modal');
         const now = Date.now();
-        
-        // Hide all views first
-        ['view-locked', 'view-buy', 'view-incubating', 'view-ready', 'view-reward'].forEach(id => {
-            document.getElementById(id).style.display = 'none';
-        });
-
+        ['view-locked', 'view-buy', 'view-incubating', 'view-ready', 'view-reward'].forEach(id => document.getElementById(id).style.display = 'none');
         document.getElementById('modal-egg-visual').style.transform = 'scale(1)';
         document.getElementById('modal-egg-visual').innerText = '🥚';
-
         modal.style.display = 'flex';
 
         if (appData.egg.active) {
-            // Egg exists
             if (now < appData.egg.hatchTime) {
                 document.getElementById('view-incubating').style.display = 'block';
                 startTimer();
@@ -518,10 +514,8 @@
                 document.getElementById('view-ready').style.display = 'block';
             }
         } else {
-            // No egg - Check Wallet
-            if (appData.stardust >= 10) {
-                document.getElementById('view-buy').style.display = 'block';
-            } else {
+            if (appData.stardust >= 10) document.getElementById('view-buy').style.display = 'block';
+            else {
                 document.getElementById('view-locked').style.display = 'block';
                 document.getElementById('modal-bal-locked').innerText = appData.stardust;
             }
@@ -533,12 +527,7 @@
         clearInterval(eggTimerInterval);
         eggTimerInterval = setInterval(() => {
             const diff = appData.egg.hatchTime - Date.now();
-            if (diff <= 0) {
-                clearInterval(eggTimerInterval);
-                openEggUI(); 
-                updateUI();
-                return;
-            }
+            if (diff <= 0) { clearInterval(eggTimerInterval); openEggUI(); updateUI(); return; }
             const h = Math.floor(diff / (1000 * 60 * 60));
             const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const s = Math.floor((diff % (1000 * 60)) / 1000);
@@ -549,21 +538,16 @@
     function hatchEgg() {
         const unowned = rewardPool.filter(r => !appData.unlockedSkins.includes(r.id));
         let reward;
-        
         if(unowned.length === 0) reward = rewardPool[Math.floor(Math.random() * rewardPool.length)];
         else reward = unowned[Math.floor(Math.random() * unowned.length)];
         
         if(!appData.unlockedSkins.includes(reward.id)) appData.unlockedSkins.push(reward.id);
-
         appData.activeSkins[reward.game] = reward.skinId;
-
-        // Reset Egg
         appData.egg.active = false;
         appData.egg.ready = false;
         saveData();
         updateUI();
 
-        // Animation
         const eggVis = document.getElementById('modal-egg-visual');
         eggVis.style.transition = '0.5s';
         eggVis.style.transform = 'scale(1.5) rotate(10deg)';
@@ -578,64 +562,14 @@
             }, 300);
         }, 300);
     }
+    function closeEggUI(e) { if(e && e.target.id !== 'egg-modal') return; document.getElementById('egg-modal').style.display = 'none'; clearInterval(eggTimerInterval); }
 
-    function closeEggUI(e) {
-        if(e && e.target.id !== 'egg-modal') return; 
-        document.getElementById('egg-modal').style.display = 'none';
-        clearInterval(eggTimerInterval);
-    }
-
-    // --- GAME LAUNCHER & COMMUNICATION ---
-    function launchGame(url, category) {
-        const layer = document.getElementById('game-layer');
-        const frame = document.getElementById('game-frame');
-        
-        let skinParam = '';
-        if (category && appData.activeSkins[category] !== 'default') {
-            const separator = url.includes('?') ? '&' : '?';
-            skinParam = `${separator}skin=${appData.activeSkins[category]}`;
-        }
-        frame.src = url + skinParam;
-        layer.style.display = 'block';
-    }
-
-    window.addEventListener('message', function(event) {
-        if(event.data === 'close_game') {
-            document.getElementById('game-layer').style.display = 'none';
-            document.getElementById('game-frame').src = '';
-            setTimeout(loadData, 50); 
-        }
-        // HANDLE STARDUST
-        if(event.data && event.data.type === 'stardust_collected') {
-            appData.stardust++;
-            saveData();
-            // Show Notification
-            const notif = document.createElement('div');
-            notif.innerHTML = "✨ +1 STARDUST";
-            notif.style.cssText = "position:fixed; top:50px; right:20px; background:rgba(0,0,0,0.8); color:#ffd700; border:1px solid #ffd700; padding:5px 10px; border-radius:20px; font-weight:bold; font-family:var(--font-head); animation:float 1s ease-out forwards; z-index:9999;";
-            document.body.appendChild(notif);
-            setTimeout(() => notif.remove(), 1000);
-        }
-        // HIGH SCORE RECEIVED (Fix for saving scores)
-        if(event.data && event.data.type === 'game_over') {
-            const gameName = event.data.game; // e.g., 'runner', 'memory'
-            const score = event.data.score;
-            
-            // Update if higher
-            if(!appData.scores[gameName] || score > appData.scores[gameName]) {
-                appData.scores[gameName] = Math.floor(score);
-                saveData(); // Saves to localStorage 'brainArcadeV6_Data'
-                console.log("New Highscore Saved:", gameName, score);
-            }
-        }
-    });
-
+    // Initialize
     loadData();
 </script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 <script>
-    // FIREBASE ANALYTICS (Kept same as before)
     const firebaseConfig = { apiKey: "AIzaSyCYPD6eFQvtwi6CMBkAbQ1SmkWA2qtby9s", authDomain: "wofplay-123.firebaseapp.com", databaseURL: "https://wofplay-123-default-rtdb.firebaseio.com", projectId: "wofplay-123", storageBucket: "wofplay-123.firebasestorage.app", messagingSenderId: "716443688368", appId: "1:716443688368:web:6ebd08d8d3a49f1c494a75" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
