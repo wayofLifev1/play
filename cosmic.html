@@ -201,13 +201,14 @@
     }
 
     function gameOver() {
-        state.playing = false;
-        document.getElementById('game-over').style.display = 'flex';
-        document.getElementById('final-score').innerText = Math.floor(state.score);
-        
-        // Save High Score via Parent
-        window.parent.postMessage({ type: 'game_over', game: 'cosmic', score: state.score }, '*');
+    state.playing = false;
+    document.getElementById('game-over').style.display = 'flex';
+    document.getElementById('final-score').innerText = Math.floor(state.score);
+    
+    // FIXED: The Hub looks for 'hs-glider', so we must send 'glider'
+    window.parent.postMessage({ type: 'game_over', game: 'glider', score: state.score }, '*');
     }
+    
 
     function showMsg(txt) {
         const d = document.createElement('div');
