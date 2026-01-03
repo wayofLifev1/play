@@ -130,6 +130,7 @@ const COLORS = {
     grid: 'rgba(255, 255, 255, 0.05)',
     empty: 'rgba(0, 0, 0, 0.3)',
     shadow: 'rgba(255,255,255,0.1)',
+    ghost: 'rgba(255,255,255,0.2)',
     shapes: [
         '#00f2ea', // Cyan
         '#bf00ff', // Purple
@@ -235,7 +236,7 @@ function resize() {
     CELL_SIZE = (boardSize / GRID_SIZE) - PADDING;
 
     BOARD_X = (w - boardSize) / 2;
-    BOARD_Y = 20;
+    BOARD_Y = 40; // Top padding
 
     TRAY_Y = BOARD_Y + boardSize + 40;
 
@@ -251,7 +252,8 @@ function createShape() {
         color: color,
         x: 0, y: 0, 
         baseX: 0, baseY: 0,
-        scale: 0.6
+        currentScale: 0.6, // Animation value
+        targetScale: 0.6
     };
 }
 
@@ -270,6 +272,7 @@ function layoutTray() {
         if (shape !== draggingShape) {
             shape.x = shape.baseX;
             shape.y = shape.baseY;
+            shape.targetScale = 0.6;
         }
     });
 }
@@ -280,11 +283,11 @@ function layoutTray() {
 function spawnParticles(r, c, color) {
     const x = BOARD_X + c * (CELL_SIZE + PADDING) + CELL_SIZE/2;
     const y = BOARD_Y + r * (CELL_SIZE + PADDING) + CELL_SIZE/2;
-    for(let i=0; i<5; i++) {
+    for(let i=0; i<8; i++) {
         particles.push({
             x: x, y: y,
-            vx: (Math.random() - 0.5) * 10,
-            vy: (Math.random() - 0.5) * 10,
+            vx: (Math.random() - 0.5) * 15,
+            vy: (Math.random() - 0.5) * 15,
             life: 1.0,
             color: color
         });
@@ -315,13 +318,18 @@ function drawParticles() {
 /**
  * --- RENDER ---
  */
+// Linear interpolation for smooth animations
+function lerp(start, end, amt) {
+    return (1 - amt) * start + amt * end;
+}
+
 function drawRoundedRect(x, y, w, h, r, color, glow=false) {
     ctx.beginPath();
     ctx.roundRect(x, y, w, h, r);
     ctx.fillStyle = color;
     
     if(glow) {
-        ctx.shadowBlur = 15;
+        ctx.shadowBlur = 20;
         ctx.shadowColor = color;
     } else {
         ctx.shadowBlur = 0;
@@ -341,19 +349,23 @@ function drawCell(r, c, color, scale=1, offX=0, offY=0, glow=false) {
 }
 
 function drawShape(shape) {
+    // Smooth Scale Animation
+    shape.currentScale = lerp(shape.currentScale, shape.targetScale, 0.2);
+
     const mat = shape.matrix;
-    const w = mat[0].length * (CELL_SIZE + PADDING) * shape.scale;
-    const h = mat.length * (CELL_SIZE + PADDING) * shape.scale;
+    const w = mat[0].length * (CELL_SIZE + PADDING) * shape.currentScale;
+    const h = mat.length * (CELL_SIZE + PADDING) * shape.currentScale;
     const startX = shape.x - w/2;
     const startY = shape.y - h/2;
 
     for(let r=0; r<mat.length; r++) {
         for(let c=0; c<mat[r].length; c++) {
             if(mat[r][c]) {
-                const cx = startX + c * (CELL_SIZE + PADDING) * shape.scale;
-                const cy = startY + r * (CELL_SIZE + PADDING) * shape.scale;
-                // Only glow if full scale (dragged)
-                drawRoundedRect(cx, cy, CELL_SIZE*shape.scale, CELL_SIZE*shape.scale, 6, shape.color, shape.scale > 0.8);
+                const cx = startX + c * (CELL_SIZE + PADDING) * shape.currentScale;
+                const cy = startY + r * (CELL_SIZE + PADDING) * shape.currentScale;
+                // Strong glow when dragging (scale > 0.8)
+                const isDragging = shape.currentScale > 0.8;
+                drawRoundedRect(cx, cy, CELL_SIZE*shape.currentScale, CELL_SIZE*shape.currentScale, 6, shape.color, isDragging);
             }
         }
     }
@@ -362,7 +374,7 @@ function drawShape(shape) {
 function loop() {
     ctx.clearRect(0,0, canvas.width, canvas.height);
 
-    // Draw Grid
+    // 1. Draw Board
     for(let r=0; r<GRID_SIZE; r++) {
         for(let c=0; c<GRID_SIZE; c++) {
             // Draw Empty Slot
@@ -374,26 +386,32 @@ function loop() {
         }
     }
 
-    // Ghost
+    // 2. Draw Ghost (Projected onto grid)
     if(draggingShape) {
-        const gridPos = getGridPos(draggingShape.x, draggingShape.y);
+        // We use the FLOATED position for logic
+        const gridPos = getCenterGridPos(draggingShape.x, draggingShape.y);
         if(gridPos && canPlace(draggingShape.matrix, gridPos.r, gridPos.c)) {
+            // Re-calculate visual ghost based on gridPos
             for(let r=0; r<draggingShape.matrix.length; r++) {
                 for(let c=0; c<draggingShape.matrix[r].length; c++) {
                     if(draggingShape.matrix[r][c]) {
-                        drawCell(gridPos.r + r, gridPos.c + c, COLORS.shadow);
+                        // Use text color logic for ghost? No, use white w/ opacity
+                        drawCell(gridPos.r + r, gridPos.c + c, COLORS.ghost);
                     }
                 }
             }
         }
     }
 
-    // Tray Shapes
+    // 3. Draw Shapes (Tray & Dragging)
+    // Draw non-dragging ones first
     trayShapes.forEach(s => {
-        if(s) drawShape(s);
+        if(s && s !== draggingShape) drawShape(s);
     });
+    // Draw dragging one last (on top)
+    if(draggingShape) drawShape(draggingShape);
     
-    // Particles
+    // 4. Particles
     updateParticles();
     drawParticles();
 
@@ -401,24 +419,31 @@ function loop() {
 }
 
 /**
- * --- INTERACTIONS ---
+ * --- INTERACTIONS (The Secret Sauce) ---
  */
-function getGridPos(px, py) {
-    const shapeW = draggingShape.matrix[0].length * (CELL_SIZE+PADDING);
-    const shapeH = draggingShape.matrix.length * (CELL_SIZE+PADDING);
+
+// We offset the shape UP by this amount so it's above the finger
+const DRAG_OFFSET_Y = 100; 
+
+function getCenterGridPos(shapeCenterX, shapeCenterY) {
+    // 1. Find which cell is closest to the CENTER of the shape
+    const relativeX = shapeCenterX - BOARD_X;
+    const relativeY = shapeCenterY - BOARD_Y;
     
-    // Offset logic to see under finger
-    const testX = px - (shapeW/2);
-    const testY = py - (shapeH/2) - 60; // Larger offset for touch
+    const centerC = Math.floor(relativeX / (CELL_SIZE + PADDING));
+    const centerR = Math.floor(relativeY / (CELL_SIZE + PADDING));
 
-    const col = Math.round((testX - BOARD_X) / (CELL_SIZE + PADDING));
-    const row = Math.round((testY - BOARD_Y) / (CELL_SIZE + PADDING));
+    // 2. Adjust for shape dimensions (The "Magnet" logic)
+    // If shape is 3x3, center is index 1. Start is index -1 relative to center.
+    const rows = draggingShape.matrix.length;
+    const cols = draggingShape.matrix[0].length;
 
-    if(row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE) {
-        return {r: row, c: col};
-    }
-    return null;
+    const startR = centerR - Math.floor(rows / 2);
+    const startC = centerC - Math.floor(cols / 2);
+
+    return { r: startR, c: startC };
 }
+
 
 function canPlace(matrix, r, c) {
     for(let i=0; i<matrix.length; i++) {
@@ -426,7 +451,9 @@ function canPlace(matrix, r, c) {
             if(matrix[i][j] === 1) {
                 const gr = r + i;
                 const gc = c + j;
-                if(gr >= GRID_SIZE || gc >= GRID_SIZE) return false;
+                // Bounds
+                if(gr < 0 || gr >= GRID_SIZE || gc < 0 || gc >= GRID_SIZE) return false;
+                // Collision
                 if(grid[gr][gc] !== 0) return false;
             }
         }
@@ -452,7 +479,7 @@ function placeBlock(shape, r, c) {
     checkLines();
     
     if(trayShapes.every(s => s === null)) {
-        fillTray();
+        setTimeout(fillTray, 200);
     } else {
         checkGameOver();
     }
@@ -471,10 +498,11 @@ function checkLines() {
     }
 
     if(rows.length > 0 || cols.length > 0) {
-        playSound('clear');
+        // Combo Math
         const lines = rows.length + cols.length;
-        score += lines * 100 * (lines > 1 ? 2 : 1);
-        
+        score += lines * 100 * lines; // Exponential reward
+        playSound('clear');
+
         // Effects & Clear
         rows.forEach(r => {
             for(let c=0; c<GRID_SIZE; c++) {
@@ -484,8 +512,7 @@ function checkLines() {
         });
         cols.forEach(c => {
             for(let r=0; r<GRID_SIZE; r++) {
-                // Avoid double spawn on intersection
-                if(!rows.includes(r)) {
+                if(!rows.includes(r)) { // Don't double clear intersection
                     spawnParticles(r, c, grid[r][c]);
                     grid[r][c] = 0;
                 }
@@ -508,8 +535,8 @@ function checkGameOver() {
     if(active.length === 0) return;
 
     let canMove = false;
-    // Brute force check: can any shape fit anywhere?
     for(let s of active) {
+        // Brute force: check every possible position on board
         for(let r=0; r<GRID_SIZE; r++) {
             for(let c=0; c<GRID_SIZE; c++) {
                 if(canPlace(s.matrix, r, c)) { canMove = true; break; }
@@ -522,12 +549,6 @@ function checkGameOver() {
     if(!canMove) {
         isGameOver = true;
         playSound('fail');
-        
-        // Send score to main app
-        if(window.parent) {
-            window.parent.postMessage({ type: 'game_over', game: 'blast', score: score }, '*');
-        }
-
         setTimeout(() => {
             document.getElementById('final-msg').style.display = 'block';
             document.getElementById('final-msg').innerText = "SCORE: " + score;
@@ -537,34 +558,45 @@ function checkGameOver() {
 }
 
 // Input Handlers
+let touchOffsetX = 0, touchOffsetY = 0;
+
 function handleStart(x, y) {
     if(isGameOver) return;
     trayShapes.forEach(s => {
-        if(s && Math.abs(x - s.x) < 50 && Math.abs(y - s.y) < 50) {
+        // Hit box is looser for touch
+        if(s && Math.abs(x - s.x) < 60 && Math.abs(y - s.y) < 60) {
             draggingShape = s;
-            s.scale = 1.0;
-            s.x = x;
-            s.y = y - 60;
+            draggingShape.targetScale = 1.1; // JUICY POP
             playSound('pickup');
+            
+            // Set offset so shape doesn't snap center to finger immediately
+            // But we want to animate it UP.
+            // Let's just snap X, but Offset Y.
         }
     });
 }
+
 function handleMove(x, y) {
     if(draggingShape) {
         draggingShape.x = x;
-        draggingShape.y = y - 60;
+        // THE SECRET SAUCE:
+        // Position the shape 100px ABOVE the finger
+        draggingShape.y = y - DRAG_OFFSET_Y;
     }
 }
+
 function handleEnd() {
     if(draggingShape) {
-        const pos = getGridPos(draggingShape.x, draggingShape.y);
+        const pos = getCenterGridPos(draggingShape.x, draggingShape.y);
+        
         if(pos && canPlace(draggingShape.matrix, pos.r, pos.c)) {
             placeBlock(draggingShape, pos.r, pos.c);
         } else {
-            // Snap back
-            draggingShape.scale = 0.6;
+            // Snap back to dock
+            draggingShape.targetScale = 0.6;
             draggingShape.x = draggingShape.baseX;
             draggingShape.y = draggingShape.baseY;
+            playSound('fail'); // Soft click sound
         }
         draggingShape = null;
     }
@@ -581,7 +613,7 @@ canvas.addEventListener('touchstart', e => {
     handleStart(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
 }, {passive: false});
 canvas.addEventListener('touchmove', e => {
-    e.preventDefault();
+    e.preventDefault(); // Stop scrolling
     const rect = canvas.getBoundingClientRect();
     handleMove(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
 }, {passive: false});
@@ -594,7 +626,6 @@ document.getElementById('start-btn').addEventListener('click', () => {
 
 window.addEventListener('resize', () => {
     resize();
-    // Force redraw once
     loop();
 });
 
